@@ -2,6 +2,7 @@ package application
 
 import (
 	"github.com/jneo8/mcp-juju/config"
+	"github.com/jneo8/mcp-juju/pkg/jujuclient"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -12,9 +13,10 @@ type Application interface {
 type application struct {
 	mcpServer *server.MCPServer
 	config    config.Config
+	client    jujuclient.Client
 }
 
-func NewApplication(cfg config.Config) (Application, error) {
+func NewApplication(cfg config.Config, client jujuclient.Client) (Application, error) {
 	app := &application{
 		mcpServer: server.NewMCPServer(
 			config.MCPServerName,
@@ -23,6 +25,7 @@ func NewApplication(cfg config.Config) (Application, error) {
 			server.WithLogging(),
 		),
 		config: cfg,
+		client: client,
 	}
 	if err := app.init(); err != nil {
 		return nil, err
