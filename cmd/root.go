@@ -6,6 +6,7 @@ import (
 
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/jneo8/mcp-juju/pkg/application"
+	"github.com/jneo8/mcp-juju/pkg/jujuclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,7 +27,12 @@ var rootCmd = &cobra.Command{
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	app, err := application.NewApplication(cfg)
+
+	client, err := jujuclient.NewClient()
+	if err != nil {
+		return err
+	}
+	app, err := application.NewApplication(cfg, client)
 	if err != nil {
 		return err
 	}
