@@ -3,6 +3,7 @@ package application
 import (
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/jneo8/mcp-juju/pkg/jujuclient"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -39,5 +40,9 @@ func (a *application) RunSSE() error {
 }
 
 func (a *application) init() error {
+	a.mcpServer.AddTool(
+		mcp.NewTool("listControllers", mcp.WithDescription("List all juju controllers")),
+		gethandleListControllerTool(a.client),
+	)
 	return nil
 }
