@@ -49,3 +49,32 @@ func gethandleListModelTool(client jujuclient.Client) func(ctx context.Context, 
 		}, nil
 	}
 }
+
+func gethandleGetStatusTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		controllers, err := client.GetControllers()
+		if err != nil {
+			return nil, err
+		}
+		models, err := client.GetModels()
+		if err != nil {
+			return nil, err
+		}
+		status, err := client.GetStatus(ctx, controllers.Current, models.Current, true)
+		if err != nil {
+			return nil, err
+		}
+		jsonBytes, err := json.Marshal(status)
+		if err != nil {
+			return nil, err
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.TextContent{
+					Type: "text",
+					Text: string(jsonBytes),
+				},
+			},
+		}, nil
+	}
+}
