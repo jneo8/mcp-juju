@@ -45,11 +45,21 @@ func (a *application) init() error {
 		gethandleListControllerTool(a.client),
 	)
 	a.mcpServer.AddTool(
-		mcp.NewTool("listModels", mcp.WithDescription("List all juju models")),
+		mcp.NewTool(
+			"listModels",
+			mcp.WithDescription("List all juju models"),
+			mcp.WithString("controller"),
+		),
 		gethandleListModelTool(a.client),
 	)
 	a.mcpServer.AddTool(
-		mcp.NewTool("status", mcp.WithDescription("Get juju status")),
+		mcp.NewTool(
+			"getStatus",
+			mcp.WithDescription("Get juju status"),
+			mcp.WithString("controller"),
+			mcp.WithString("model"),
+			mcp.WithBoolean("includeStorage"),
+		),
 		gethandleGetStatusTool(a.client),
 	)
 	return nil

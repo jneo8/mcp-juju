@@ -1,0 +1,11 @@
+package application
+
+type ListModelToolArgs struct {
+	Controller string `mapstructure:"controller,omitempty"`
+}
+
+type GetStatusToolArgs struct {
+	Controller     string `mapstructure:"controller,omitempty"`
+	Model          string `mapstructure:"model,omitempty"`
+	IncludeStorage bool   `mapstructure:"include-storage,omitempty"`
+}

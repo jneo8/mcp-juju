@@ -15,7 +15,7 @@ import (
 
 type Client interface {
 	GetControllers() (Controllers, error)
-	GetModels() (Models, error)
+	GetModels(controllerName string) (Models, error)
 	GetStatus(ctx context.Context, controllerName, modelName string, includeStorage bool) (Status, error)
 }
 
@@ -48,16 +48,20 @@ func (c *client) GetControllers() (Controllers, error) {
 	return Controllers{ControllerDetails: allControllers, Current: currentController}, nil
 }
 
-func (c *client) GetModels() (Models, error) {
-	controllers, err := c.GetControllers()
+func (c *client) GetModels(currentController string) (Models, error) {
+	if currentController == "" {
+		controllers, err := c.GetControllers()
+		if err != nil {
+			return Models{}, err
+		}
+		currentController = controllers.Current
+	}
+
+	allModels, err := c.clientStore.AllModels(currentController)
 	if err != nil {
 		return Models{}, err
 	}
-	allModels, err := c.clientStore.AllModels(controllers.Current)
-	if err != nil {
-		return Models{}, err
-	}
-	currentModel, err := c.clientStore.CurrentModel(controllers.Current)
+	currentModel, err := c.clientStore.CurrentModel(currentController)
 	if err != nil {
 		if errors.Is(err, errors.NotFound) {
 			log.Debug().Msg("CurrentModel not found")
@@ -69,6 +73,21 @@ func (c *client) GetModels() (Models, error) {
 }
 
 func (c *client) GetStatus(ctx context.Context, controllerName, modelName string, includeStorage bool) (Status, error) {
+	if controllerName == "" {
+		currentController, err := c.clientStore.CurrentController()
+		if err != nil {
+			return Status{}, err
+		}
+		controllerName = currentController
+	}
+	if modelName == "" {
+		currentModel, err := c.clientStore.CurrentModel(controllerName)
+		if err != nil {
+			return Status{}, err
+		}
+		modelName = currentModel
+	}
+
 	apiClient, err := c.getAPIClient(ctx, controllerName, modelName)
 	if err != nil {
 		return Status{}, err
