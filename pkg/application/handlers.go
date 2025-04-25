@@ -28,3 +28,24 @@ func gethandleListControllerTool(client jujuclient.Client) func(ctx context.Cont
 		}, nil
 	}
 }
+
+func gethandleListModelTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		models, err := client.GetModels()
+		if err != nil {
+			return nil, err
+		}
+		jsonBytes, err := json.Marshal(models)
+		if err != nil {
+			return nil, err
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.TextContent{
+					Type: "text",
+					Text: string(jsonBytes),
+				},
+			},
+		}, nil
+	}
+}

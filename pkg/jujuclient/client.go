@@ -8,6 +8,7 @@ import (
 
 type Client interface {
 	GetControllers() (Controllers, error)
+	GetModels() (Models, error)
 }
 
 type client struct {
@@ -35,7 +36,22 @@ func (c *client) GetControllers() (Controllers, error) {
 	return Controllers{ControllerDetails: allControllers, Current: currentController}, nil
 }
 
-type Controllers struct {
-	ControllerDetails map[string]jclient.ControllerDetails `json:"controllerDetails,omitempty"`
-	Current           string                               `json:"current,omitempty"`
+func (c *client) GetModels() (Models, error) {
+	controllers, err := c.GetControllers()
+	if err != nil {
+		return Models{}, err
+	}
+	allModels, err := c.clientStore.AllModels(controllers.Current)
+	if err != nil {
+		return Models{}, err
+	}
+	currentModel, err := c.clientStore.CurrentModel(controllers.Current)
+	if err != nil {
+		if errors.Is(err, errors.NotFound) {
+			log.Debug().Msg("CurrentModel not found")
+		} else {
+			return Models{}, err
+		}
+	}
+	return Models{ModelDetails: allModels, Current: currentModel}, nil
 }
