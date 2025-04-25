@@ -44,5 +44,9 @@ func (a *application) init() error {
 		mcp.NewTool("listControllers", mcp.WithDescription("List all juju controllers")),
 		gethandleListControllerTool(a.client),
 	)
+	a.mcpServer.AddTool(
+		mcp.NewTool("listModels", mcp.WithDescription("List all juju models")),
+		gethandleListModelTool(a.client),
+	)
 	return nil
 }
