@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/jneo8/mcp-juju/pkg/jujuclient"
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -31,7 +32,9 @@ func gethandleListControllerTool(client jujuclient.Client) func(ctx context.Cont
 
 func gethandleListModelTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		models, err := client.GetModels()
+		var args ListModelToolArgs
+		mapstructure.Decode(req.Params.Arguments, &args)
+		models, err := client.GetModels(args.Controller)
 		if err != nil {
 			return nil, err
 		}
@@ -52,15 +55,9 @@ func gethandleListModelTool(client jujuclient.Client) func(ctx context.Context, 
 
 func gethandleGetStatusTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		controllers, err := client.GetControllers()
-		if err != nil {
-			return nil, err
-		}
-		models, err := client.GetModels()
-		if err != nil {
-			return nil, err
-		}
-		status, err := client.GetStatus(ctx, controllers.Current, models.Current, true)
+		var args GetStatusToolArgs
+		mapstructure.Decode(req.Params.Arguments, &args)
+		status, err := client.GetStatus(ctx, args.Controller, args.Model, args.IncludeStorage)
 		if err != nil {
 			return nil, err
 		}
