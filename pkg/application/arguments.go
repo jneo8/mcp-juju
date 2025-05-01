@@ -15,3 +15,10 @@ type GetApplicationConfigToolArgs struct {
 	Model       string `mapstructure:"model,omitempty"`
 	Application string `mapstructure:"application,omitempty"`
 }
+
+type SetApplicationConfigToolArgs struct {
+	Controller  string            `mapstructure:"controller,omitempty"`
+	Model       string            `mapstructure:"model,omitempty"`
+	Application string            `mapstructure:"application,omitempty"`
+	Settings    map[string]string `mapstructure:"settings,omitempty"`
+}

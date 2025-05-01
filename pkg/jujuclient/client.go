@@ -16,10 +16,14 @@ import (
 )
 
 type Client interface {
+	// Basic information
 	GetControllers() (Controllers, error)
 	GetModels(controllerName string) (Models, error)
 	GetStatus(ctx context.Context, controllerName, modelName string, includeStorage bool) (Status, error)
+
+	// Application configuration
 	GetApplicationConfig(ctx context.Context, controllerName, modelName, appName string) (ApplicationConfig, error)
+	SetApplicationConfig(ctx context.Context, controllerName, modelName, appName string, settings map[string]string) error
 }
 
 type client struct {
@@ -133,6 +137,28 @@ func (c *client) GetApplicationConfig(ctx context.Context, controllerName, model
 		appConfig.ApplicationConfig = results.ApplicationConfig
 	}
 	return appConfig, nil
+}
+
+func (c *client) SetApplicationConfig(ctx context.Context, controllerName, modelName, appName string, settings map[string]string) error {
+	if controllerName == "" {
+		currentController, err := c.clientStore.CurrentController()
+		if err != nil {
+			return err
+		}
+		controllerName = currentController
+	}
+	if modelName == "" {
+		currentModel, err := c.clientStore.CurrentModel(controllerName)
+		if err != nil {
+			return err
+		}
+		modelName = currentModel
+	}
+	appAPI, err := c.getApplicationAPI(ctx, controllerName, modelName)
+	if err != nil {
+		return err
+	}
+	return appAPI.SetConfig(ctx, appName, "", settings)
 }
 
 func (c *client) getApplicationAPI(ctx context.Context, controllerName, modelName string) (application.ApplicationAPI, error) {

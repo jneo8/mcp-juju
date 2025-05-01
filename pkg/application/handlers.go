@@ -98,3 +98,22 @@ func gethandleGetApplicationConfigTool(client jujuclient.Client) func(ctx contex
 		}, nil
 	}
 }
+
+func gethandleSetApplicationConfigTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		var args SetApplicationConfigToolArgs
+		mapstructure.Decode(req.Params.Arguments, &args)
+		err := client.SetApplicationConfig(ctx, args.Controller, args.Model, args.Application, args.Settings)
+		if err != nil {
+			return nil, err
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.TextContent{
+					Type: "text",
+					Text: "success",
+				},
+			},
+		}, nil
+	}
+}
