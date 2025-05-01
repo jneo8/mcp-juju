@@ -18,3 +18,10 @@ type Models struct {
 type Status struct {
 	FullStatus params.FullStatus `json:"fullStatus,omitempty"`
 }
+
+type ApplicationConfig struct {
+	ApplicationConfig map[string]interface{} `json:"application-config,omitempty"`
+	Application       string                 `json:"application,omitempty"`
+	Charm             string                 `json:"charm,omitempty"`
+	Settings          map[string]interface{} `json:"settings,omitempty"`
+}
