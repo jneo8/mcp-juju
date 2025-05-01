@@ -7,6 +7,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/jneo8/mcp-juju/pkg/jujuclient"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/rs/zerolog/log"
 )
 
 func gethandleListControllerTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -103,7 +104,8 @@ func gethandleSetApplicationConfigTool(client jujuclient.Client) func(ctx contex
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var args SetApplicationConfigToolArgs
 		mapstructure.Decode(req.Params.Arguments, &args)
-		err := client.SetApplicationConfig(ctx, args.Controller, args.Model, args.Application, args.Settings)
+		log.Debug().Msgf("%#v %#v", args, req.Params.Arguments)
+		err := client.SetApplicationConfig(ctx, args.Controller, args.Model, args.Application, map[string]string{args.Key: args.Value})
 		if err != nil {
 			return nil, err
 		}
