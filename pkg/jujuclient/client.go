@@ -5,7 +5,9 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/juju/juju/api"
+	apiapplication "github.com/juju/juju/api/client/application"
 	apiclient "github.com/juju/juju/api/client/client"
+	"github.com/juju/juju/cmd/juju/application"
 	"github.com/juju/juju/cmd/modelcmd"
 	"github.com/juju/juju/core/logger"
 	"github.com/juju/juju/juju"
@@ -17,6 +19,7 @@ type Client interface {
 	GetControllers() (Controllers, error)
 	GetModels(controllerName string) (Models, error)
 	GetStatus(ctx context.Context, controllerName, modelName string, includeStorage bool) (Status, error)
+	GetApplicationConfig(ctx context.Context, controllerName, modelName, appName string) (ApplicationConfig, error)
 }
 
 type client struct {
@@ -97,6 +100,47 @@ func (c *client) GetStatus(ctx context.Context, controllerName, modelName string
 		return Status{}, err
 	}
 	return Status{FullStatus: *fullStatus}, nil
+}
+
+func (c *client) GetApplicationConfig(ctx context.Context, controllerName, modelName, appName string) (ApplicationConfig, error) {
+	if controllerName == "" {
+		currentController, err := c.clientStore.CurrentController()
+		if err != nil {
+			return ApplicationConfig{}, err
+		}
+		controllerName = currentController
+	}
+	if modelName == "" {
+		currentModel, err := c.clientStore.CurrentModel(controllerName)
+		if err != nil {
+			return ApplicationConfig{}, err
+		}
+		modelName = currentModel
+	}
+	appAPI, err := c.getApplicationAPI(ctx, controllerName, modelName)
+	if err != nil {
+		return ApplicationConfig{}, err
+	}
+	results, err := appAPI.Get(ctx, appName)
+	if err != nil {
+		return ApplicationConfig{}, err
+	}
+	var appConfig ApplicationConfig
+	appConfig.Application = results.Application
+	appConfig.Charm = results.Charm
+	appConfig.Settings = results.CharmConfig
+	if len(results.ApplicationConfig) > 0 {
+		appConfig.ApplicationConfig = results.ApplicationConfig
+	}
+	return appConfig, nil
+}
+
+func (c *client) getApplicationAPI(ctx context.Context, controllerName, modelName string) (application.ApplicationAPI, error) {
+	root, err := c.getAPIConn(ctx, controllerName, modelName)
+	if err != nil {
+		return nil, err
+	}
+	return apiapplication.NewClient(root), nil
 }
 
 func (c *client) getAPIClient(ctx context.Context, controllerName string, modelName string) (*apiclient.Client, error) {

@@ -75,3 +75,26 @@ func gethandleGetStatusTool(client jujuclient.Client) func(ctx context.Context, 
 		}, nil
 	}
 }
+
+func gethandleGetApplicationConfigTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		var args GetApplicationConfigToolArgs
+		mapstructure.Decode(req.Params.Arguments, &args)
+		status, err := client.GetApplicationConfig(ctx, args.Controller, args.Model, args.Application)
+		if err != nil {
+			return nil, err
+		}
+		jsonBytes, err := json.Marshal(status)
+		if err != nil {
+			return nil, err
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.TextContent{
+					Type: "text",
+					Text: string(jsonBytes),
+				},
+			},
+		}, nil
+	}
+}

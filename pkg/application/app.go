@@ -62,5 +62,15 @@ func (a *application) init() error {
 		),
 		gethandleGetStatusTool(a.client),
 	)
+	a.mcpServer.AddTool(
+		mcp.NewTool(
+			"getApplicationConfig",
+			mcp.WithDescription("Get juju application config"),
+			mcp.WithString("controller"),
+			mcp.WithString("model"),
+			mcp.WithString("application"),
+		),
+		gethandleGetApplicationConfigTool(a.client),
+	)
 	return nil
 }
