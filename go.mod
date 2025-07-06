@@ -6,7 +6,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/juju/errors v1.0.0
 	github.com/juju/juju v0.0.0-20250424134709-fd8cfb76debd
-	github.com/mark3labs/mcp-go v0.23.1
+	github.com/mark3labs/mcp-go v0.32.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1

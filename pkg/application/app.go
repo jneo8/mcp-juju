@@ -8,7 +8,7 @@ import (
 )
 
 type Application interface {
-	RunSSE() error
+	RunServer() error
 }
 
 type application struct {
@@ -34,9 +34,9 @@ func NewApplication(cfg config.Config, client jujuclient.Client) (Application, e
 	return app, nil
 }
 
-func (a *application) RunSSE() error {
-	sseServer := newSSEServer(a.mcpServer, a.config)
-	return runSSE(sseServer, a.config)
+func (a *application) RunServer() error {
+	streamableHTTPServer := newStreamableHTTPServer(a.mcpServer, a.config)
+	return runStreamableHTTPServer(streamableHTTPServer, a.config)
 }
 
 func (a *application) init() error {

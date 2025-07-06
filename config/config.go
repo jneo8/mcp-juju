@@ -1,13 +1,27 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/mark3labs/mcp-go/server"
+)
 
 type Config struct {
-	Host  string
-	Port  int
-	Debug bool
+	Port     int
+	Debug    bool
+	EndPoint string
 }
 
 func (c *Config) URL() string {
-	return fmt.Sprintf("http://%s:%d", c.Host, c.Port)
+	return fmt.Sprintf("http://localhost:%d%s", c.Port, c.EndPoint)
+}
+
+func (c *Config) StreamableHTTPOptions() []server.StreamableHTTPOption {
+	return []server.StreamableHTTPOption{
+		c.endpointPath(),
+	}
+}
+
+func (c *Config) endpointPath() server.StreamableHTTPOption {
+	return server.WithEndpointPath(c.EndPoint)
 }

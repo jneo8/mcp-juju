@@ -20,9 +20,6 @@ func TestRootCmd(t *testing.T) {
 	})
 
 	t.Run("should have required flags", func(t *testing.T) {
-		hostFlag := rootCmd.Flag("host")
-		require.NotNil(t, hostFlag)
-		assert.Equal(t, "localhost", hostFlag.DefValue)
 
 		portFlag := rootCmd.Flag("port")
 		require.NotNil(t, portFlag)
@@ -40,7 +37,6 @@ func TestPersistentPreRun(t *testing.T) {
 		testCmd := &cobra.Command{
 			Use: "test",
 		}
-		testCmd.Flags().String("host", "localhost", "Host to server on")
 		testCmd.Flags().String("port", "8080", "Port to server on")
 		testCmd.Flags().Bool("debug", false, "Enable debug mode")
 
@@ -57,11 +53,9 @@ func TestPersistentPreRun(t *testing.T) {
 
 	t.Run("should handle environment variables", func(t *testing.T) {
 		// Set environment variables
-		os.Setenv("MCP_JUJU_HOST", "testhost")
 		os.Setenv("MCP_JUJU_PORT", "9090")
 		os.Setenv("MCP_JUJU_DEBUG", "true")
 		defer func() {
-			os.Unsetenv("MCP_JUJU_HOST")
 			os.Unsetenv("MCP_JUJU_PORT")
 			os.Unsetenv("MCP_JUJU_DEBUG")
 		}()
@@ -70,7 +64,6 @@ func TestPersistentPreRun(t *testing.T) {
 		testCmd := &cobra.Command{
 			Use: "test",
 		}
-		testCmd.Flags().String("host", "localhost", "Host to server on")
 		testCmd.Flags().String("port", "8080", "Port to server on")
 		testCmd.Flags().Bool("debug", false, "Enable debug mode")
 
@@ -82,7 +75,6 @@ func TestPersistentPreRun(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Verify that environment variables were read
-		assert.Equal(t, "testhost", viper.GetString("host"))
 		assert.Equal(t, "9090", viper.GetString("port"))
 		assert.Equal(t, "true", viper.GetString("debug"))
 	})
@@ -118,7 +110,6 @@ func TestConfigUnmarshal(t *testing.T) {
 	t.Run("should unmarshal config correctly", func(t *testing.T) {
 		// Set up viper with test values
 		viper.Reset()
-		viper.Set("host", "testhost")
 		viper.Set("port", 9090)
 		viper.Set("debug", true)
 
@@ -126,7 +117,6 @@ func TestConfigUnmarshal(t *testing.T) {
 		err := viper.Unmarshal(&testConfig)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "testhost", testConfig.Host)
 		assert.Equal(t, 9090, testConfig.Port)
 		assert.Equal(t, true, testConfig.Debug)
 	})

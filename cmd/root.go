@@ -14,8 +14,8 @@ import (
 var cfg config.Config
 
 func init() {
-	rootCmd.Flags().String("host", "localhost", "Host to server on")
 	rootCmd.Flags().String("port", "8080", "Port to server on")
+	rootCmd.Flags().String("endpoint", "/mcp", "Endpoint path for the server")
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
 }
 
@@ -36,7 +36,7 @@ func run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := app.RunSSE(); err != nil {
+	if err := app.RunServer(); err != nil {
 		return err
 	}
 	return nil

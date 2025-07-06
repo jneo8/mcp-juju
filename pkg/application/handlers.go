@@ -7,10 +7,13 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/jneo8/mcp-juju/pkg/jujuclient"
 	"github.com/mark3labs/mcp-go/mcp"
+	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
 )
 
-func gethandleListControllerTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+type ToolHandlerFuncFactory func(client jujuclient.Client) mcpserver.ToolHandlerFunc
+
+func gethandleListControllerTool(client jujuclient.Client) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		controllers, err := client.GetControllers()
 		if err != nil {
@@ -31,7 +34,7 @@ func gethandleListControllerTool(client jujuclient.Client) func(ctx context.Cont
 	}
 }
 
-func gethandleListModelTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func gethandleListModelTool(client jujuclient.Client) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var args ListModelToolArgs
 		mapstructure.Decode(req.Params.Arguments, &args)
@@ -54,7 +57,7 @@ func gethandleListModelTool(client jujuclient.Client) func(ctx context.Context, 
 	}
 }
 
-func gethandleGetStatusTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func gethandleGetStatusTool(client jujuclient.Client) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var args GetStatusToolArgs
 		mapstructure.Decode(req.Params.Arguments, &args)
@@ -77,7 +80,7 @@ func gethandleGetStatusTool(client jujuclient.Client) func(ctx context.Context, 
 	}
 }
 
-func gethandleGetApplicationConfigTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func gethandleGetApplicationConfigTool(client jujuclient.Client) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var args GetApplicationConfigToolArgs
 		mapstructure.Decode(req.Params.Arguments, &args)
@@ -100,7 +103,7 @@ func gethandleGetApplicationConfigTool(client jujuclient.Client) func(ctx contex
 	}
 }
 
-func gethandleSetApplicationConfigTool(client jujuclient.Client) func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func gethandleSetApplicationConfigTool(client jujuclient.Client) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var args SetApplicationConfigToolArgs
 		mapstructure.Decode(req.Params.Arguments, &args)
