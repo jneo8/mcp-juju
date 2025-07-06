@@ -24,31 +24,31 @@ func (l *LoggerWrapper) getMessage(msg string, args ...any) string {
 }
 
 func (l *LoggerWrapper) Criticalf(ctx context.Context, msg string, args ...any) {
-	log.Ctx(ctx).Fatal().Msg(l.getMessage(msg, args))
+	log.Ctx(ctx).Fatal().Msg(l.getMessage(msg, args...))
 }
 
 func (l *LoggerWrapper) Errorf(ctx context.Context, msg string, args ...any) {
-	log.Ctx(ctx).Error().Msg(l.getMessage(msg, args))
+	log.Ctx(ctx).Error().Msg(l.getMessage(msg, args...))
 }
 
 func (l *LoggerWrapper) Warningf(ctx context.Context, msg string, args ...any) {
-	log.Ctx(ctx).Warn().Msg(l.getMessage(msg, args))
+	log.Ctx(ctx).Warn().Msg(l.getMessage(msg, args...))
 }
 
 func (l *LoggerWrapper) Infof(ctx context.Context, msg string, args ...any) {
-	log.Ctx(ctx).Info().Msg(l.getMessage(msg, args))
+	log.Ctx(ctx).Info().Msg(l.getMessage(msg, args...))
 }
 
 func (l *LoggerWrapper) Debugf(ctx context.Context, msg string, args ...any) {
-	log.Ctx(ctx).Debug().Msg(l.getMessage(msg, args))
+	log.Ctx(ctx).Debug().Msg(l.getMessage(msg, args...))
 }
 
 func (l *LoggerWrapper) Tracef(ctx context.Context, msg string, args ...any) {
-	log.Ctx(ctx).Trace().Msg(l.getMessage(msg, args))
+	log.Ctx(ctx).Trace().Msg(l.getMessage(msg, args...))
 }
 
 func (l *LoggerWrapper) Logf(ctx context.Context, level logger.Level, labels logger.Labels, format string, args ...any) {
-	log.Ctx(ctx).WithLevel(l.logger.GetLevel()).Msgf(format, args)
+	log.Ctx(ctx).WithLevel(l.logger.GetLevel()).Msgf(format, args...)
 }
 
 func (l *LoggerWrapper) IsLevelEnabled(level logger.Level) bool {
