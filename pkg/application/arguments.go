@@ -23,3 +23,13 @@ type SetApplicationConfigToolArgs struct {
 	Key         string `mapstructure:"key,omitempty"`
 	Value       string `mapstructure:"value,omitempty"`
 }
+
+type AddModelToolArgs struct {
+	Controller  string `mapstructure:"controller,omitempty"`
+	Model       string `mapstructure:"model,omitempty"`
+	Owner       string `mapstructure:"owner,omitempty"`
+	Config      string `mapstructure:"config,omitempty"`
+	Credential  string `mapstructure:"credential,omitempty"`
+	CloudRegion string `mapstructure:"cloud-region,omitempty"`
+	NoSwitch    bool   `mapstructure:"no-switch,omitempty"`
+}

@@ -6,6 +6,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/juju/errors v1.0.0
 	github.com/juju/juju v0.0.0-20250424134709-fd8cfb76debd
+	github.com/juju/names/v6 v6.0.0-20250318090139-ec8d71d906f5
 	github.com/mark3labs/mcp-go v0.32.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
@@ -70,7 +71,6 @@ require (
 	github.com/juju/lumberjack/v2 v2.0.2 // indirect
 	github.com/juju/mgo/v3 v3.0.4 // indirect
 	github.com/juju/mutex/v2 v2.0.0 // indirect
-	github.com/juju/names/v6 v6.0.0-20250318090139-ec8d71d906f5 // indirect
 	github.com/juju/naturalsort v1.0.0 // indirect
 	github.com/juju/persistent-cookiejar v1.0.0 // indirect
 	github.com/juju/proxy v1.0.0 // indirect

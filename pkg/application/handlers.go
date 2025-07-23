@@ -122,3 +122,24 @@ func gethandleSetApplicationConfigTool(client jujuclient.Client) mcpserver.ToolH
 		}, nil
 	}
 }
+
+func gethandleAddModelTool(client jujuclient.Client) mcpserver.ToolHandlerFunc {
+	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		var args AddModelToolArgs
+		mapstructure.Decode(req.Params.Arguments, &args)
+		log.Debug().Msgf("%#v %#v", args, req.Params.Arguments)
+		// err := client.AddModel(ctx, args.Controller, args.Model, args.Owner, args.Credential, args.CloudRegion, args.Config, args.NoSwitch)
+		err := client.AddModel(ctx, args.Controller, args.Model, args.Owner, args.Credential, args.CloudRegion, make(map[string]string), args.NoSwitch)
+		if err != nil {
+			return nil, err
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.TextContent{
+					Type: "text",
+					Text: "success",
+				},
+			},
+		}, nil
+	}
+}

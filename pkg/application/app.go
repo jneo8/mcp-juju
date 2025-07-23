@@ -84,5 +84,19 @@ func (a *application) init() error {
 		),
 		gethandleSetApplicationConfigTool(a.client),
 	)
+	a.mcpServer.AddTool(
+		mcp.NewTool(
+			"addModel",
+			mcp.WithDescription("Adds a workload model"),
+			mcp.WithString("controller"),
+			mcp.WithString("model", mcp.Required()),
+			mcp.WithString("owner"),
+			mcp.WithString("config"),
+			mcp.WithString("credential"),
+			mcp.WithBoolean("NoSwitch"),
+			mcp.WithBoolean("CloudRegion"),
+		),
+		gethandleAddModelTool(a.client),
+	)
 	return nil
 }
