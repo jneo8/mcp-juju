@@ -1,9 +1,8 @@
 package application
 
 import (
-	"github.com/jneo8/mcp-juju/config"
-	"github.com/jneo8/mcp-juju/pkg/jujuclient"
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/juju/juju/mcp-juju/config"
+	"github.com/juju/juju/mcp-juju/pkg/jujuadapter"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -14,10 +13,10 @@ type Application interface {
 type application struct {
 	mcpServer *server.MCPServer
 	config    config.Config
-	client    jujuclient.Client
+	adapter   jujuadapter.Adapter
 }
 
-func NewApplication(cfg config.Config, client jujuclient.Client) (Application, error) {
+func NewApplication(cfg config.Config, adapter jujuadapter.Adapter) (Application, error) {
 	app := &application{
 		mcpServer: server.NewMCPServer(
 			config.MCPServerName,
@@ -25,8 +24,8 @@ func NewApplication(cfg config.Config, client jujuclient.Client) (Application, e
 			server.WithResourceCapabilities(true, false),
 			server.WithLogging(),
 		),
-		config: cfg,
-		client: client,
+		config:  cfg,
+		adapter: adapter,
 	}
 	if err := app.init(); err != nil {
 		return nil, err
@@ -40,63 +39,71 @@ func (a *application) RunServer() error {
 }
 
 func (a *application) init() error {
-	a.mcpServer.AddTool(
-		mcp.NewTool("listControllers", mcp.WithDescription("List all juju controllers")),
-		gethandleListControllerTool(a.client),
-	)
-	a.mcpServer.AddTool(
-		mcp.NewTool(
-			"listModels",
-			mcp.WithDescription("List all juju models"),
-			mcp.WithString("controller"),
-		),
-		gethandleListModelTool(a.client),
-	)
-	a.mcpServer.AddTool(
-		mcp.NewTool(
-			"getStatus",
-			mcp.WithDescription("Get juju status"),
-			mcp.WithString("controller"),
-			mcp.WithString("model"),
-			mcp.WithBoolean("includeStorage"),
-		),
-		gethandleGetStatusTool(a.client),
-	)
-	a.mcpServer.AddTool(
-		mcp.NewTool(
-			"getApplicationConfig",
-			mcp.WithDescription("Get juju application config"),
-			mcp.WithString("controller"),
-			mcp.WithString("model"),
-			mcp.WithString("application"),
-		),
-		gethandleGetApplicationConfigTool(a.client),
-	)
-	a.mcpServer.AddTool(
-		mcp.NewTool(
-			"setApplicationConfig",
-			mcp.WithDescription("Set juju application config"),
-			mcp.WithString("controller"),
-			mcp.WithString("model"),
-			mcp.WithString("application"),
-			mcp.WithString("key", mcp.Required()),
-			mcp.WithString("value", mcp.Required()),
-		),
-		gethandleSetApplicationConfigTool(a.client),
-	)
-	a.mcpServer.AddTool(
-		mcp.NewTool(
-			"addModel",
-			mcp.WithDescription("Adds a workload model"),
-			mcp.WithString("controller"),
-			mcp.WithString("model", mcp.Required()),
-			mcp.WithString("owner"),
-			mcp.WithString("config"),
-			mcp.WithString("credential"),
-			mcp.WithBoolean("NoSwitch"),
-			mcp.WithBoolean("CloudRegion"),
-		),
-		gethandleAddModelTool(a.client),
-	)
+	toolNames := a.adapter.ToolNames()
+	for _, toolName := range toolNames {
+		tool, handlerFunc, err := a.adapter.GetTool(toolName)
+		if err != nil {
+			return err
+		}
+		a.mcpServer.AddTool(*tool, handlerFunc)
+	}
+	// a.mcpServer.AddTool(
+	// 	mcp.NewTool("listControllers", mcp.WithDescription("List all juju controllers")),
+	// 	gethandleListControllerTool(a.client),
+	// )
+	// a.mcpServer.AddTool(
+	// 	mcp.NewTool(
+	// 		"listModels",
+	// 		mcp.WithDescription("List all juju models"),
+	// 		mcp.WithString("controller"),
+	// 	),
+	// 	gethandleListModelTool(a.client),
+	// )
+	// a.mcpServer.AddTool(
+	// 	mcp.NewTool(
+	// 		"getStatus",
+	// 		mcp.WithDescription("Get juju status"),
+	// 		mcp.WithString("controller"),
+	// 		mcp.WithString("model"),
+	// 		mcp.WithBoolean("includeStorage"),
+	// 	),
+	// 	gethandleGetStatusTool(a.client),
+	// )
+	// a.mcpServer.AddTool(
+	// 	mcp.NewTool(
+	// 		"getApplicationConfig",
+	// 		mcp.WithDescription("Get juju application config"),
+	// 		mcp.WithString("controller"),
+	// 		mcp.WithString("model"),
+	// 		mcp.WithString("application"),
+	// 	),
+	// 	gethandleGetApplicationConfigTool(a.client),
+	// )
+	// a.mcpServer.AddTool(
+	// 	mcp.NewTool(
+	// 		"setApplicationConfig",
+	// 		mcp.WithDescription("Set juju application config"),
+	// 		mcp.WithString("controller"),
+	// 		mcp.WithString("model"),
+	// 		mcp.WithString("application"),
+	// 		mcp.WithString("key", mcp.Required()),
+	// 		mcp.WithString("value", mcp.Required()),
+	// 	),
+	// 	gethandleSetApplicationConfigTool(a.client),
+	// )
+	// a.mcpServer.AddTool(
+	// 	mcp.NewTool(
+	// 		"addModel",
+	// 		mcp.WithDescription("Adds a workload model"),
+	// 		mcp.WithString("controller"),
+	// 		mcp.WithString("model", mcp.Required()),
+	// 		mcp.WithString("owner"),
+	// 		mcp.WithString("config"),
+	// 		mcp.WithString("credential"),
+	// 		mcp.WithBoolean("NoSwitch"),
+	// 		mcp.WithBoolean("CloudRegion"),
+	// 	),
+	// 	gethandleAddModelTool(a.client),
+	// )
 	return nil
 }
