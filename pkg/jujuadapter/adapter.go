@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/juju/gnuflag"
+	"github.com/juju/juju/juju"
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
@@ -34,7 +35,52 @@ func (a *adapter) ToolNames() []string {
 	return commandList
 }
 
-func (a *adapter) init() {}
+func (a *adapter) init() {
+	// Initialize Juju environment exactly like the CLI does - once at startup
+	if err := juju.InitJujuXDGDataHome(); err != nil {
+		log.Error().Err(err).Msg("Failed to initialize Juju environment")
+	}
+}
+
+func (a *adapter) buildEnhancedDescription(cmd Command) string {
+	info := cmd.Info()
+	if info == nil {
+		return cmd.ToolDescription()
+	}
+
+	var desc strings.Builder
+
+	// Start with purpose (short description)
+	if info.Purpose != "" {
+		desc.WriteString(info.Purpose)
+	}
+
+	// Add argument info if available
+	if info.Args != "" {
+		desc.WriteString(fmt.Sprintf("\n\nArguments: %s", info.Args))
+	}
+
+	// Add long documentation if available and different from purpose
+	if info.Doc != "" && info.Doc != info.Purpose {
+		desc.WriteString(fmt.Sprintf("\n\nDetails:\n%s", strings.TrimSpace(info.Doc)))
+	}
+
+	// Add examples if available
+	if info.Examples != "" {
+		desc.WriteString(fmt.Sprintf("\n\nExamples:\n%s", strings.TrimSpace(info.Examples)))
+	}
+
+	// Add see also if available
+	if len(info.SeeAlso) > 0 {
+		desc.WriteString(fmt.Sprintf("\n\nSee also: %s", strings.Join(info.SeeAlso, ", ")))
+	}
+
+	result := desc.String()
+	if result == "" {
+		return cmd.ToolDescription()
+	}
+	return result
+}
 
 func (a *adapter) GetTool(name string) (*mcp.Tool, mcpserver.ToolHandlerFunc, error) {
 	cmd, err := a.factory.GetCommand(name)
@@ -46,7 +92,7 @@ func (a *adapter) GetTool(name string) (*mcp.Tool, mcpserver.ToolHandlerFunc, er
 	if err != nil {
 		return nil, nil, err
 	}
-	allOptions := []mcp.ToolOption{mcp.WithDescription(cmd.ToolDescription())}
+	allOptions := []mcp.ToolOption{mcp.WithDescription(a.buildEnhancedDescription(cmd))}
 	allOptions = append(allOptions, toolOptions...)
 	tool := mcp.NewTool(cmd.Name(), allOptions...)
 	handlerFunc := a.getHandlerFunc(cmd)
@@ -58,6 +104,13 @@ func (a *adapter) flagSetToToolOptions(cmd Command) ([]mcp.ToolOption, error) {
 	cmd.SetFlags(flagSet)
 
 	toolOptions := []mcp.ToolOption{}
+
+	// Add positional arguments support
+	toolOptions = append(toolOptions, mcp.WithArray("args",
+		mcp.WithStringItems(),
+		mcp.Description("Positional arguments for the command"),
+	))
+
 	flagSet.VisitAll(
 		func(flag *gnuflag.Flag) {
 			log.Debug().Msgf("flag: %#v", flag)
@@ -123,8 +176,13 @@ func (a *adapter) setFlagsFromRequest(flagSet *gnuflag.FlagSet, req mcp.CallTool
 	if !ok {
 		return fmt.Errorf("invalid arguments type")
 	}
-	
+
 	for key, value := range arguments {
+		// Skip the special "args" parameter - it's handled separately
+		if key == "args" {
+			continue
+		}
+
 		flag := flagSet.Lookup(key)
 		if flag == nil {
 			// Skip unknown flags - they might be handled elsewhere
@@ -151,6 +209,11 @@ func (a *adapter) setFlagsFromRequest(flagSet *gnuflag.FlagSet, req mcp.CallTool
 			stringValue = fmt.Sprintf("%v", v)
 		}
 
+		// Skip empty string values for flags
+		if stringValue == "" {
+			continue
+		}
+
 		if err := flag.Value.Set(stringValue); err != nil {
 			return fmt.Errorf("failed to set flag %s: %w", key, err)
 		}
@@ -169,6 +232,29 @@ func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest)
 	flagSet := gnuflag.NewFlagSet(cmd.Name(), gnuflag.ContinueOnError)
 	cmd.SetFlags(flagSet)
 
+	// Extract positional arguments from MCP request
+	var positionalArgs []string
+	arguments, ok := req.Params.Arguments.(map[string]interface{})
+	if ok {
+		if argsInterface, exists := arguments["args"]; exists {
+			switch argsValue := argsInterface.(type) {
+			case []interface{}:
+				for _, arg := range argsValue {
+					if str, ok := arg.(string); ok && str != "" {
+						positionalArgs = append(positionalArgs, str)
+					}
+				}
+			case []string:
+				for _, str := range argsValue {
+					if str != "" {
+						positionalArgs = append(positionalArgs, str)
+					}
+				}
+			}
+		}
+		log.Debug().Msgf("Extracted positional args (filtered): %v", positionalArgs)
+	}
+
 	// Convert MCP request arguments to flag values
 	if err := a.setFlagsFromRequest(flagSet, req); err != nil {
 		return nil, err
@@ -179,16 +265,17 @@ func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest)
 		return nil, err
 	}
 
-	// Initialize the command with parsed arguments
-	if err := cmd.Init(flagSet.Args()); err != nil {
+	// Initialize the command with positional arguments
+	if err := cmd.Init(positionalArgs); err != nil {
 		return nil, err
 	}
 
 	stdout, stderr, err := cmd.RunWithOutput(ctx)
 	if err != nil {
-		return nil, err
+		// Provide more context about the command that failed
+		return nil, fmt.Errorf("command '%s' failed: %w\nStderr: %s", name, err, stderr)
 	}
-	
+
 	// Combine stdout and stderr for the result
 	output := stdout
 	if stderr != "" {
@@ -197,7 +284,7 @@ func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest)
 		}
 		output += stderr
 	}
-	
+
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			mcp.TextContent{

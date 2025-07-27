@@ -16,6 +16,8 @@ require (
 
 replace github.com/juju/juju => github.com/jneo8/juju v0.0.0-20250725142741-f9a9c40bed54
 
+replace gopkg.in/yaml.v2 => github.com/juju/yaml/v2 v2.0.0
+
 require (
 	cloud.google.com/go/auth v0.16.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect

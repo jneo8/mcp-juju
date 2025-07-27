@@ -230,6 +230,7 @@ type Command interface {
 	Init(args []string) error
 	Name() string
 	ToolDescription() string
+	Info() *cmd.Info
 	Run(context.Context) error
 	RunWithOutput(context.Context) (string, string, error)
 }
@@ -246,6 +247,10 @@ func (c *command) Name() string {
 
 func (c *command) ToolDescription() string {
 	return c.info.Purpose
+}
+
+func (c *command) Info() *cmd.Info {
+	return c.info
 }
 
 func (c *command) getContext(ctx context.Context) (*cmd.Context, error) {
