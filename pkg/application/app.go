@@ -1,8 +1,8 @@
 package application
 
 import (
-	"github.com/juju/juju/mcp-juju/config"
-	"github.com/juju/juju/mcp-juju/pkg/jujuadapter"
+	"github.com/jneo8/mcp-juju/config"
+	"github.com/jneo8/mcp-juju/pkg/jujuadapter"
 	"github.com/mark3labs/mcp-go/server"
 )
 

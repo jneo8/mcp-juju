@@ -26,13 +26,13 @@ import (
 	"github.com/juju/juju/cmd/juju/secrets"
 	"github.com/juju/juju/cmd/juju/space"
 	"github.com/juju/juju/cmd/juju/ssh"
-	"github.com/juju/juju/cmd/juju/sshkeys"
 	"github.com/juju/juju/cmd/juju/status"
 	"github.com/juju/juju/cmd/juju/storage"
 	"github.com/juju/juju/cmd/juju/subnet"
 	"github.com/juju/juju/cmd/juju/user"
 	"github.com/juju/juju/cmd/juju/commands"
-	"github.com/juju/juju/internal/cmd"
+	"github.com/juju/juju/cmd/juju/waitfor"
+	"github.com/juju/cmd/v3"
 )
 
 type CommandFactory interface {
@@ -363,13 +363,13 @@ func (c *commandFactory) GetCommand(name string) (Command, error) {
 
 	// SSH keys commands
 	case "add-ssh-key":
-		jujuCmd = sshkeys.NewAddKeysCommand()
+		jujuCmd = commands.NewAddKeysCommand()
 	case "remove-ssh-key":
-		jujuCmd = sshkeys.NewRemoveKeysCommand()
+		jujuCmd = commands.NewRemoveKeysCommand()
 	case "import-ssh-key":
-		jujuCmd = sshkeys.NewImportKeysCommand()
+		jujuCmd = commands.NewImportKeysCommand()
 	case "ssh-keys":
-		jujuCmd = sshkeys.NewListKeysCommand()
+		jujuCmd = commands.NewListKeysCommand()
 
 	// Backup commands
 	case "create-backup":
@@ -458,8 +458,22 @@ func (c *commandFactory) GetCommand(name string) (Command, error) {
 		jujuCmd = secretbackends.NewRemoveSecretBackendCommand()
 	case "show-secret-backend":
 		jujuCmd = secretbackends.NewShowSecretBackendCommand()
-	case "model-secret-backend":
-		jujuCmd = secretbackends.NewModelSecretBackendCommand()
+	// case "model-secret-backend":
+	//	jujuCmd = secretbackends.NewModelSecretBackendCommand()
+
+	// Wait for commands
+	case "wait-for":
+		jujuCmd = waitfor.NewWaitForCommand()
+	
+	// Missing commands that should be added
+	case "upgrade-machine":
+		jujuCmd = machine.NewUpgradeMachineCommand()
+	case "enable-ha":
+		var err error
+		jujuCmd, err = commands.NewCommandByName("enable-ha")
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, fmt.Errorf("unknown command: %s", name)

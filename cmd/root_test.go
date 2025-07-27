@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/juju/juju/mcp-juju/config"
+	"github.com/jneo8/mcp-juju/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/juju/juju/mcp-juju/config"
-	"github.com/juju/juju/mcp-juju/pkg/application"
-	"github.com/juju/juju/mcp-juju/pkg/jujuadapter"
+	"github.com/jneo8/mcp-juju/config"
+	"github.com/jneo8/mcp-juju/pkg/application"
+	"github.com/jneo8/mcp-juju/pkg/jujuadapter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

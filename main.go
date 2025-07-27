@@ -1,6 +1,6 @@
 package main
 
-import "github.com/juju/juju/mcp-juju/cmd"
+import "github.com/jneo8/mcp-juju/cmd"
 
 func main() {
 	cmd.Execute()

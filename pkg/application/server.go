@@ -3,7 +3,7 @@ package application
 import (
 	"fmt"
 
-	"github.com/juju/juju/mcp-juju/config"
+	"github.com/jneo8/mcp-juju/config"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
 )

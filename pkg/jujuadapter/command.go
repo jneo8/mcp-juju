@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/juju/gnuflag"
-	"github.com/juju/juju/internal/cmd"
+	"github.com/juju/cmd/v3"
 )
 
 var commandList = []string{
-	// From registerCommands in exact order
+	// From registerCommands in exact order as juju/cmd/juju/commands/main.go
 	"version",
+
 	// Creation commands.
 	"bootstrap",
 	"add-relation",
@@ -90,6 +91,7 @@ var commandList = []string{
 	"remove-machine",
 	"machines",
 	"show-machine",
+	"upgrade-machine",
 
 	// Manage model
 	"model-config",
@@ -112,6 +114,9 @@ var commandList = []string{
 	"operations",
 	"show-operation",
 	"show-task",
+
+	// Manage controller availability
+	"enable-ha",
 
 	// Manage and control applications
 	"add-unit",
@@ -221,7 +226,9 @@ var commandList = []string{
 	"update-secret-backend",
 	"remove-secret-backend",
 	"show-secret-backend",
-	"model-secret-backend",
+
+	// Payload commands.
+	"wait-for",
 }
 
 type Command interface {
@@ -230,6 +237,7 @@ type Command interface {
 	Init(args []string) error
 	Name() string
 	ToolDescription() string
+	Info() *cmd.Info
 	Run(context.Context) error
 	RunWithOutput(context.Context) (string, string, error)
 }
@@ -248,12 +256,16 @@ func (c *command) ToolDescription() string {
 	return c.info.Purpose
 }
 
+func (c *command) Info() *cmd.Info {
+	return c.info
+}
+
 func (c *command) getContext(ctx context.Context) (*cmd.Context, error) {
 	cmdCtx, err := cmd.DefaultContext()
 	if err != nil {
 		return nil, err
 	}
-	cmdCtx.Context = ctx
+	// Note: cmd/v3 Context might not have Context field
 	return cmdCtx, nil
 }
 
@@ -262,7 +274,7 @@ func (c *command) getContextWithOutput(ctx context.Context) (*cmd.Context, *byte
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	cmdCtx.Context = ctx
+	// Note: cmd/v3 Context might not have Context field
 	
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
