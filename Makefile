@@ -18,7 +18,7 @@ lint: fmt vet ## Run all linters (format and vet)
 
 ##@ Testing
 
-.PHONY: test test-coverage
+.PHONY: test test-coverage mocks
 
 test: ## Run all tests
 	go test ./...
@@ -26,6 +26,9 @@ test: ## Run all tests
 test-coverage: ## Run tests with coverage report
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out
+
+mocks: ## Generate mock files using mockery
+	mockery
 
 ##@ Help
 
