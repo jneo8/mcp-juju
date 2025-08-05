@@ -15,6 +15,7 @@ import (
 	"github.com/juju/juju/cmd/juju/caas"
 	"github.com/juju/juju/cmd/juju/charmhub"
 	"github.com/juju/juju/cmd/juju/cloud"
+	"github.com/juju/juju/cmd/juju/commands"
 	"github.com/juju/juju/cmd/juju/controller"
 	"github.com/juju/juju/cmd/juju/crossmodel"
 	"github.com/juju/juju/cmd/juju/dashboard"
@@ -30,13 +31,13 @@ import (
 	"github.com/juju/juju/cmd/juju/storage"
 	"github.com/juju/juju/cmd/juju/subnet"
 	"github.com/juju/juju/cmd/juju/user"
-	"github.com/juju/juju/cmd/juju/commands"
 	"github.com/juju/juju/cmd/juju/waitfor"
 	"github.com/juju/cmd/v3"
 )
 
 type CommandFactory interface {
-	GetCommand(name string) (Command, error)
+	GetCommand(id JujuCommandID) (Command, error)
+	GetCommandByName(name string) (Command, error)
 }
 
 type commandFactory struct{}
@@ -59,433 +60,388 @@ func (cloudToCommandAdaptor) WritePersonalCloudMetadata(cloudsMap map[string]clo
 	return cloudfile.WritePersonalCloudMetadata(cloudsMap)
 }
 
-func (c *commandFactory) GetCommand(name string) (Command, error) {
-	var jujuCmd cmd.Command
-	
-	switch name {
-	// Reporting commands
-	case "status":
-		jujuCmd = status.NewStatusCommand()
-	case "status-history":
-		jujuCmd = status.NewStatusHistoryCommand()
-	
-	// Application commands
-	case "add-unit":
-		jujuCmd = application.NewAddUnitCommand()
-	case "config":
-		jujuCmd = application.NewConfigCommand()
-	case "deploy":
-		jujuCmd = application.NewDeployCommand()
-	case "expose":
-		jujuCmd = application.NewExposeCommand()
-	case "unexpose":
-		jujuCmd = application.NewUnexposeCommand()
-	case "get-constraints":
-		jujuCmd = application.NewApplicationGetConstraintsCommand()
-	case "set-constraints":
-		jujuCmd = application.NewApplicationSetConstraintsCommand()
-	case "diff-bundle":
-		jujuCmd = application.NewDiffBundleCommand()
-	case "show-application":
-		jujuCmd = application.NewShowApplicationCommand()
-	case "show-unit":
-		jujuCmd = application.NewShowUnitCommand()
-	case "refresh":
-		jujuCmd = application.NewRefreshCommand()
-	case "bind":
-		jujuCmd = application.NewBindCommand()
-	case "scale-application":
-		jujuCmd = application.NewScaleApplicationCommand()
-	case "trust":
-		jujuCmd = application.NewTrustCommand()
-	case "add-relation":
-		jujuCmd = application.NewAddRelationCommand()
-	case "remove-relation":
-		jujuCmd = application.NewRemoveRelationCommand()
-	case "remove-application":
-		jujuCmd = application.NewRemoveApplicationCommand()
-	case "remove-unit":
-		jujuCmd = application.NewRemoveUnitCommand()
-	case "remove-saas":
-		jujuCmd = application.NewRemoveSaasCommand()
-	case "consume":
-		jujuCmd = application.NewConsumeCommand()
-	case "suspend-relation":
-		jujuCmd = application.NewSuspendRelationCommand()
-	case "resume-relation":
-		jujuCmd = application.NewResumeRelationCommand()
-	case "resolved":
-		jujuCmd = application.NewResolvedCommand()
-
-	// Machine commands
-	case "add-machine":
-		jujuCmd = machine.NewAddCommand()
-	case "remove-machine":
-		jujuCmd = machine.NewRemoveCommand()
-	case "machines":
-		jujuCmd = machine.NewListMachinesCommand()
-	case "show-machine":
-		jujuCmd = machine.NewShowMachineCommand()
-
-	// Model commands
-	case "model-config":
-		jujuCmd = model.NewConfigCommand()
-	case "model-defaults":
-		jujuCmd = model.NewDefaultsCommand()
-	case "retry-provisioning":
-		jujuCmd = model.NewRetryProvisioningCommand()
-	case "destroy-model":
-		jujuCmd = model.NewDestroyCommand()
-	case "grant":
-		jujuCmd = model.NewGrantCommand()
-	case "revoke":
-		jujuCmd = model.NewRevokeCommand()
-	case "show-model":
-		jujuCmd = model.NewShowCommand()
-	case "model-credential":
-		jujuCmd = model.NewModelCredentialCommand()
-	case "export-bundle":
-		jujuCmd = model.NewExportBundleCommand()
-	case "migrate":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("migrate")
-		if err != nil {
-			return nil, err
-		}
-
-	// Commands from main commands package
-	case "bootstrap":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("bootstrap")
-		if err != nil {
-			return nil, err
-		}
-	case "switch":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("switch")
-		if err != nil {
-			return nil, err
-		}
-	case "version":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("version")
-		if err != nil {
-			return nil, err
-		}
-	case "sync-agent-binary":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("sync-agent-binary")
-		if err != nil {
-			return nil, err
-		}
-	case "upgrade-model":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("upgrade-model")
-		if err != nil {
-			return nil, err
-		}
-	case "upgrade-controller":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("upgrade-controller")
-		if err != nil {
-			return nil, err
-		}
-	case "help-hooks":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("help-hooks")
-		if err != nil {
-			return nil, err
-		}
-	case "help-actions":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("help-actions")
-		if err != nil {
-			return nil, err
-		}
-	case "debug-log":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("debug-log")
-		if err != nil {
-			return nil, err
-		}
-
-	// Controller commands
-	case "add-model":
-		jujuCmd = controller.NewAddModelCommand()
-	case "destroy-controller":
-		jujuCmd = controller.NewDestroyCommand()
-	case "models":
-		jujuCmd = controller.NewListModelsCommand()
-	case "kill-controller":
-		jujuCmd = controller.NewKillCommand()
-	case "controllers":
-		jujuCmd = controller.NewListControllersCommand()
-	case "register":
-		jujuCmd = controller.NewRegisterCommand()
-	case "unregister":
-		jujuCmd = controller.NewUnregisterCommand(jujuclient.NewFileClientStore())
-	case "enable-destroy-controller":
-		jujuCmd = controller.NewEnableDestroyControllerCommand()
-	case "show-controller":
-		jujuCmd = controller.NewShowControllerCommand()
-	case "controller-config":
-		jujuCmd = controller.NewConfigCommand()
-
-	// Action commands
-	case "actions":
-		jujuCmd = action.NewListCommand()
-	case "show-action":
-		jujuCmd = action.NewShowCommand()
-	case "cancel-action":
-		jujuCmd = action.NewCancelCommand()
-	case "run":
-		jujuCmd = action.NewRunCommand()
-	case "operations":
-		jujuCmd = action.NewListOperationsCommand()
-	case "show-operation":
-		jujuCmd = action.NewShowOperationCommand()
-	case "show-task":
-		jujuCmd = action.NewShowTaskCommand()
-
-	// Cloud and credential commands
-	case "update-cloud":
-		jujuCmd = cloud.NewUpdateCloudCommand(&cloudToCommandAdaptor{})
-	case "update-public-clouds":
-		jujuCmd = cloud.NewUpdatePublicCloudsCommand()
-	case "clouds":
-		jujuCmd = cloud.NewListCloudsCommand()
-	case "regions":
-		jujuCmd = cloud.NewListRegionsCommand()
-	case "show-cloud":
-		jujuCmd = cloud.NewShowCloudCommand()
-	case "add-cloud":
-		jujuCmd = cloud.NewAddCloudCommand(&cloudToCommandAdaptor{})
-	case "remove-cloud":
-		jujuCmd = cloud.NewRemoveCloudCommand()
-	case "credentials":
-		jujuCmd = cloud.NewListCredentialsCommand()
-	case "detect-credentials":
-		jujuCmd = cloud.NewDetectCredentialsCommand()
-	case "set-default-region":
-		jujuCmd = cloud.NewSetDefaultRegionCommand()
-	case "set-default-credential":
-		jujuCmd = cloud.NewSetDefaultCredentialCommand()
-	case "add-credential":
-		jujuCmd = cloud.NewAddCredentialCommand()
-	case "remove-credential":
-		jujuCmd = cloud.NewRemoveCredentialCommand()
-	case "update-credential":
-		jujuCmd = cloud.NewUpdateCredentialCommand()
-	case "show-credential":
-		jujuCmd = cloud.NewShowCredentialCommand()
-	case "grant-cloud":
-		jujuCmd = model.NewGrantCloudCommand()
-	case "revoke-cloud":
-		jujuCmd = model.NewRevokeCloudCommand()
-
-	// User commands
-	case "add-user":
-		jujuCmd = user.NewAddCommand()
-	case "change-password":
-		jujuCmd = user.NewChangePasswordCommand()
-	case "show-user":
-		jujuCmd = user.NewShowUserCommand()
-	case "users":
-		jujuCmd = user.NewListCommand()
-	case "enable-user":
-		jujuCmd = user.NewEnableCommand()
-	case "disable-user":
-		jujuCmd = user.NewDisableCommand()
-	case "login":
-		jujuCmd = user.NewLoginCommand()
-	case "logout":
-		jujuCmd = user.NewLogoutCommand()
-	case "remove-user":
-		jujuCmd = user.NewRemoveCommand()
-	case "whoami":
-		jujuCmd = user.NewWhoAmICommand()
-
-	// Storage commands
-	case "add-storage":
-		jujuCmd = storage.NewAddCommand()
-	case "storage":
-		jujuCmd = storage.NewListCommand()
-	case "create-storage-pool":
-		jujuCmd = storage.NewPoolCreateCommand()
-	case "storage-pools":
-		jujuCmd = storage.NewPoolListCommand()
-	case "remove-storage-pool":
-		jujuCmd = storage.NewPoolRemoveCommand()
-	case "update-storage-pool":
-		jujuCmd = storage.NewPoolUpdateCommand()
-	case "show-storage":
-		jujuCmd = storage.NewShowCommand()
-	case "remove-storage":
-		jujuCmd = storage.NewRemoveStorageCommandWithAPI()
-	case "detach-storage":
-		jujuCmd = storage.NewDetachStorageCommandWithAPI()
-	case "attach-storage":
-		jujuCmd = storage.NewAttachStorageCommandWithAPI()
-	case "import-filesystem":
-		jujuCmd = storage.NewImportFilesystemCommand(storage.NewStorageImporter, nil)
-
-	// Space commands
-	case "add-space":
-		jujuCmd = space.NewAddCommand()
-	case "spaces":
-		jujuCmd = space.NewListCommand()
-	case "move-to-space":
-		jujuCmd = space.NewMoveCommand()
-	case "reload-spaces":
-		jujuCmd = space.NewReloadCommand()
-	case "show-space":
-		jujuCmd = space.NewShowSpaceCommand()
-	case "remove-space":
-		jujuCmd = space.NewRemoveCommand()
-	case "rename-space":
-		jujuCmd = space.NewRenameCommand()
-
-	// Subnet commands
-	case "subnets":
-		jujuCmd = subnet.NewListCommand()
-
-	// SSH and debugging commands
-	case "exec":
-		jujuCmd = action.NewExecCommand(nil)
-	case "scp":
-		jujuCmd = ssh.NewSCPCommand(nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy)
-	case "ssh":
-		jujuCmd = ssh.NewSSHCommand(nil, nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy)
-	case "debug-hooks":
-		jujuCmd = ssh.NewDebugHooksCommand(nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy)
-	case "debug-code":
-		jujuCmd = ssh.NewDebugCodeCommand(nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy)
-
-	// SSH keys commands
-	case "add-ssh-key":
-		jujuCmd = commands.NewAddKeysCommand()
-	case "remove-ssh-key":
-		jujuCmd = commands.NewRemoveKeysCommand()
-	case "import-ssh-key":
-		jujuCmd = commands.NewImportKeysCommand()
-	case "ssh-keys":
-		jujuCmd = commands.NewListKeysCommand()
-
-	// Backup commands
-	case "create-backup":
-		jujuCmd = backups.NewCreateCommand()
-	case "download-backup":
-		jujuCmd = backups.NewDownloadCommand()
-
-	// Block commands
-	case "disable-command":
-		jujuCmd = block.NewDisableCommand()
-	case "disabled-commands":
-		jujuCmd = block.NewListCommand()
-	case "enable-command":
-		jujuCmd = block.NewEnableCommand()
-
-	// Firewall commands
-	case "set-firewall-rule":
-		jujuCmd = firewall.NewSetFirewallRuleCommand()
-	case "list-firewall-rules":
-		jujuCmd = firewall.NewListFirewallRulesCommand()
-
-	// Cross model commands
-	case "offer":
-		jujuCmd = crossmodel.NewOfferCommand()
-	case "remove-offer":
-		jujuCmd = crossmodel.NewRemoveOfferCommand()
-	case "show-offered-endpoint":
-		jujuCmd = crossmodel.NewShowOfferedEndpointCommand()
-	case "list-endpoints":
-		jujuCmd = crossmodel.NewListEndpointsCommand()
-	case "find-endpoints":
-		jujuCmd = crossmodel.NewFindEndpointsCommand()
-
-	// CAAS commands
-	case "add-k8s":
-		jujuCmd = caas.NewAddCAASCommand(&cloudToCommandAdaptor{})
-	case "update-k8s":
-		jujuCmd = caas.NewUpdateCAASCommand(&cloudToCommandAdaptor{})
-	case "remove-k8s":
-		jujuCmd = caas.NewRemoveCAASCommand(&cloudToCommandAdaptor{})
-
-	// Dashboard commands
-	case "dashboard":
-		jujuCmd = dashboard.NewDashboardCommand()
-
-	// Resource commands
-	case "attach-resource":
-		jujuCmd = resource.NewUploadCommand()
-	case "resources":
-		jujuCmd = resource.NewListCommand()
-	case "charm-resources":
-		jujuCmd = resource.NewCharmResourcesCommand()
-
-	// CharmHub commands
-	case "info":
-		jujuCmd = charmhub.NewInfoCommand()
-	case "find":
-		jujuCmd = charmhub.NewFindCommand()
-	case "download":
-		jujuCmd = charmhub.NewDownloadCommand()
-
-	// Secrets commands
-	case "secrets":
-		jujuCmd = secrets.NewListSecretsCommand()
-	case "show-secret":
-		jujuCmd = secrets.NewShowSecretsCommand()
-	case "add-secret":
-		jujuCmd = secrets.NewAddSecretCommand()
-	case "update-secret":
-		jujuCmd = secrets.NewUpdateSecretCommand()
-	case "remove-secret":
-		jujuCmd = secrets.NewRemoveSecretCommand()
-	case "grant-secret":
-		jujuCmd = secrets.NewGrantSecretCommand()
-	case "revoke-secret":
-		jujuCmd = secrets.NewRevokeSecretCommand()
-
-	// Secret backends commands
-	case "secret-backends":
-		jujuCmd = secretbackends.NewListSecretBackendsCommand()
-	case "add-secret-backend":
-		jujuCmd = secretbackends.NewAddSecretBackendCommand()
-	case "update-secret-backend":
-		jujuCmd = secretbackends.NewUpdateSecretBackendCommand()
-	case "remove-secret-backend":
-		jujuCmd = secretbackends.NewRemoveSecretBackendCommand()
-	case "show-secret-backend":
-		jujuCmd = secretbackends.NewShowSecretBackendCommand()
-	// case "model-secret-backend":
-	//	jujuCmd = secretbackends.NewModelSecretBackendCommand()
-
-	// Wait for commands
-	case "wait-for":
-		jujuCmd = waitfor.NewWaitForCommand()
-	
-	// Missing commands that should be added
-	case "upgrade-machine":
-		jujuCmd = machine.NewUpgradeMachineCommand()
-	case "enable-ha":
-		var err error
-		jujuCmd, err = commands.NewCommandByName("enable-ha")
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		return nil, fmt.Errorf("unknown command: %s", name)
+func (c *commandFactory) GetCommand(id JujuCommandID) (Command, error) {
+	def, exists := GetCommandDefinition(id)
+	if !exists {
+		return nil, fmt.Errorf("unknown command: %s", id)
 	}
-	
+
+	jujuCmd, err := c.createJujuCommand(id)
+	if err != nil {
+		return nil, err
+	}
+
 	if jujuCmd == nil {
-		return nil, fmt.Errorf("failed to create command: %s", name)
+		return nil, fmt.Errorf("failed to create command: %s", id)
 	}
 
 	return &command{
-		cmd:  jujuCmd,
-		info: jujuCmd.Info(),
-		t:    time.Now(),
+		cmd:          jujuCmd,
+		info:         jujuCmd.Info(),
+		t:            time.Now(),
+		disabledArgs: def.DisabledArgs,
 	}, nil
+}
+
+func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error) {
+	cloudAdapter := &cloudToCommandAdaptor{}
+	
+	switch id {
+	// Reporting commands
+	case CmdStatus:
+		return status.NewStatusCommand(), nil
+	case CmdStatusHistory:
+		return status.NewStatusHistoryCommand(), nil
+	case CmdSwitch:
+		return commands.NewCommandByName(string(id))
+	case CmdVersion:
+		return commands.NewCommandByName(string(id))
+
+	// Application commands
+	case CmdAddUnit:
+		return application.NewAddUnitCommand(), nil
+	case CmdConfig:
+		return application.NewConfigCommand(), nil
+	case CmdDeploy:
+		return application.NewDeployCommand(), nil
+	case CmdExpose:
+		return application.NewExposeCommand(), nil
+	case CmdUnexpose:
+		return application.NewUnexposeCommand(), nil
+	case CmdGetConstraints:
+		return application.NewApplicationGetConstraintsCommand(), nil
+	case CmdSetConstraints:
+		return application.NewApplicationSetConstraintsCommand(), nil
+	case CmdDiffBundle:
+		return application.NewDiffBundleCommand(), nil
+	case CmdShowApplication:
+		return application.NewShowApplicationCommand(), nil
+	case CmdShowUnit:
+		return application.NewShowUnitCommand(), nil
+	case CmdRefresh:
+		return application.NewRefreshCommand(), nil
+	case CmdBind:
+		return application.NewBindCommand(), nil
+	case CmdScaleApplication:
+		return application.NewScaleApplicationCommand(), nil
+	case CmdTrust:
+		return application.NewTrustCommand(), nil
+	case CmdAddRelation:
+		return application.NewAddRelationCommand(), nil
+	case CmdRemoveRelation:
+		return application.NewRemoveRelationCommand(), nil
+	case CmdRemoveApplication:
+		return application.NewRemoveApplicationCommand(), nil
+	case CmdRemoveUnit:
+		return application.NewRemoveUnitCommand(), nil
+	case CmdRemoveSaas:
+		return application.NewRemoveSaasCommand(), nil
+	case CmdConsume:
+		return application.NewConsumeCommand(), nil
+	case CmdSuspendRelation:
+		return application.NewSuspendRelationCommand(), nil
+	case CmdResumeRelation:
+		return application.NewResumeRelationCommand(), nil
+	case CmdResolved:
+		return application.NewResolvedCommand(), nil
+
+	// Machine commands
+	case CmdAddMachine:
+		return machine.NewAddCommand(), nil
+	case CmdRemoveMachine:
+		return machine.NewRemoveCommand(), nil
+	case CmdMachines:
+		return machine.NewListMachinesCommand(), nil
+	case CmdShowMachine:
+		return machine.NewShowMachineCommand(), nil
+	case CmdUpgradeMachine:
+		return machine.NewUpgradeMachineCommand(), nil
+
+	// Model commands
+	case CmdModelConfig:
+		return model.NewConfigCommand(), nil
+	case CmdModelDefaults:
+		return model.NewDefaultsCommand(), nil
+	case CmdRetryProvisioning:
+		return model.NewRetryProvisioningCommand(), nil
+	case CmdDestroyModel:
+		return model.NewDestroyCommand(), nil
+	case CmdGrant:
+		return model.NewGrantCommand(), nil
+	case CmdRevoke:
+		return model.NewRevokeCommand(), nil
+	case CmdShowModel:
+		return model.NewShowCommand(), nil
+	case CmdModelCredential:
+		return model.NewModelCredentialCommand(), nil
+	case CmdExportBundle:
+		return model.NewExportBundleCommand(), nil
+	case CmdGrantCloud:
+		return model.NewGrantCloudCommand(), nil
+	case CmdRevokeCloud:
+		return model.NewRevokeCloudCommand(), nil
+
+	// Commands from main commands package
+	case CmdBootstrap, CmdMigrate, CmdSyncAgentBinary, CmdUpgradeModel, CmdUpgradeController,
+		 CmdHelpHooks, CmdHelpActions, CmdDebugLog, CmdEnableHa:
+		return commands.NewCommandByName(string(id))
+
+	// Controller commands
+	case CmdAddModel:
+		return controller.NewAddModelCommand(), nil
+	case CmdDestroyController:
+		return controller.NewDestroyCommand(), nil
+	case CmdModels:
+		return controller.NewListModelsCommand(), nil
+	case CmdKillController:
+		return controller.NewKillCommand(), nil
+	case CmdControllers:
+		return controller.NewListControllersCommand(), nil
+	case CmdRegister:
+		return controller.NewRegisterCommand(), nil
+	case CmdUnregister:
+		return controller.NewUnregisterCommand(jujuclient.NewFileClientStore()), nil
+	case CmdEnableDestroyController:
+		return controller.NewEnableDestroyControllerCommand(), nil
+	case CmdShowController:
+		return controller.NewShowControllerCommand(), nil
+	case CmdControllerConfig:
+		return controller.NewConfigCommand(), nil
+
+	// Action commands
+	case CmdActions:
+		return action.NewListCommand(), nil
+	case CmdShowAction:
+		return action.NewShowCommand(), nil
+	case CmdCancelAction:
+		return action.NewCancelCommand(), nil
+	case CmdRun:
+		return action.NewRunCommand(), nil
+	case CmdOperations:
+		return action.NewListOperationsCommand(), nil
+	case CmdShowOperation:
+		return action.NewShowOperationCommand(), nil
+	case CmdShowTask:
+		return action.NewShowTaskCommand(), nil
+	case CmdExec:
+		return action.NewExecCommand(nil), nil
+
+	// Cloud and credential commands
+	case CmdUpdateCloud:
+		return cloud.NewUpdateCloudCommand(cloudAdapter), nil
+	case CmdUpdatePublicClouds:
+		return cloud.NewUpdatePublicCloudsCommand(), nil
+	case CmdClouds:
+		return cloud.NewListCloudsCommand(), nil
+	case CmdRegions:
+		return cloud.NewListRegionsCommand(), nil
+	case CmdShowCloud:
+		return cloud.NewShowCloudCommand(), nil
+	case CmdAddCloud:
+		return cloud.NewAddCloudCommand(cloudAdapter), nil
+	case CmdRemoveCloud:
+		return cloud.NewRemoveCloudCommand(), nil
+	case CmdCredentials:
+		return cloud.NewListCredentialsCommand(), nil
+	case CmdDetectCredentials:
+		return cloud.NewDetectCredentialsCommand(), nil
+	case CmdSetDefaultRegion:
+		return cloud.NewSetDefaultRegionCommand(), nil
+	case CmdSetDefaultCredential:
+		return cloud.NewSetDefaultCredentialCommand(), nil
+	case CmdAddCredential:
+		return cloud.NewAddCredentialCommand(), nil
+	case CmdRemoveCredential:
+		return cloud.NewRemoveCredentialCommand(), nil
+	case CmdUpdateCredential:
+		return cloud.NewUpdateCredentialCommand(), nil
+	case CmdShowCredential:
+		return cloud.NewShowCredentialCommand(), nil
+
+	// User commands
+	case CmdAddUser:
+		return user.NewAddCommand(), nil
+	case CmdChangePassword:
+		return user.NewChangePasswordCommand(), nil
+	case CmdShowUser:
+		return user.NewShowUserCommand(), nil
+	case CmdUsers:
+		return user.NewListCommand(), nil
+	case CmdEnableUser:
+		return user.NewEnableCommand(), nil
+	case CmdDisableUser:
+		return user.NewDisableCommand(), nil
+	case CmdLogin:
+		return user.NewLoginCommand(), nil
+	case CmdLogout:
+		return user.NewLogoutCommand(), nil
+	case CmdRemoveUser:
+		return user.NewRemoveCommand(), nil  
+	case CmdWhoami:
+		return user.NewWhoAmICommand(), nil
+
+	// Storage commands
+	case CmdAddStorage:
+		return storage.NewAddCommand(), nil
+	case CmdStorage:
+		return storage.NewListCommand(), nil
+	case CmdCreateStoragePool:
+		return storage.NewPoolCreateCommand(), nil
+	case CmdStoragePools:
+		return storage.NewPoolListCommand(), nil
+	case CmdRemoveStoragePool:
+		return storage.NewPoolRemoveCommand(), nil
+	case CmdUpdateStoragePool:
+		return storage.NewPoolUpdateCommand(), nil
+	case CmdShowStorage:
+		return storage.NewShowCommand(), nil
+	case CmdRemoveStorage:
+		return storage.NewRemoveStorageCommandWithAPI(), nil
+	case CmdDetachStorage:
+		return storage.NewDetachStorageCommandWithAPI(), nil
+	case CmdAttachStorage:
+		return storage.NewAttachStorageCommandWithAPI(), nil
+	case CmdImportFilesystem:
+		return storage.NewImportFilesystemCommand(storage.NewStorageImporter, nil), nil
+
+	// Space commands
+	case CmdAddSpace:
+		return space.NewAddCommand(), nil
+	case CmdSpaces:
+		return space.NewListCommand(), nil
+	case CmdMoveToSpace:
+		return space.NewMoveCommand(), nil
+	case CmdReloadSpaces:
+		return space.NewReloadCommand(), nil
+	case CmdShowSpace:
+		return space.NewShowSpaceCommand(), nil
+	case CmdRemoveSpace:
+		return space.NewRemoveCommand(), nil
+	case CmdRenameSpace:
+		return space.NewRenameCommand(), nil
+
+	// Subnet commands
+	case CmdSubnets:
+		return subnet.NewListCommand(), nil
+
+	// SSH and debugging commands
+	case CmdScp:
+		return ssh.NewSCPCommand(nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy), nil
+	case CmdSsh:
+		return ssh.NewSSHCommand(nil, nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy), nil
+	case CmdDebugHooks:
+		return ssh.NewDebugHooksCommand(nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy), nil
+	case CmdDebugCode:
+		return ssh.NewDebugCodeCommand(nil, ssh.DefaultSSHRetryStrategy, ssh.DefaultSSHPublicKeyRetryStrategy), nil
+
+	// SSH keys commands
+	case CmdAddSshKey:
+		return commands.NewAddKeysCommand(), nil
+	case CmdRemoveSshKey:
+		return commands.NewRemoveKeysCommand(), nil
+	case CmdImportSshKey:
+		return commands.NewImportKeysCommand(), nil
+	case CmdSshKeys:
+		return commands.NewListKeysCommand(), nil
+
+	// Backup commands
+	case CmdCreateBackup:
+		return backups.NewCreateCommand(), nil
+	case CmdDownloadBackup:
+		return backups.NewDownloadCommand(), nil
+
+	// Block commands
+	case CmdDisableCommand:
+		return block.NewDisableCommand(), nil
+	case CmdDisabledCommands:
+		return block.NewListCommand(), nil
+	case CmdEnableCommand:
+		return block.NewEnableCommand(), nil
+
+	// Firewall commands
+	case CmdSetFirewallRule:
+		return firewall.NewSetFirewallRuleCommand(), nil
+	case CmdListFirewallRules:
+		return firewall.NewListFirewallRulesCommand(), nil
+
+	// Cross model commands
+	case CmdOffer:
+		return crossmodel.NewOfferCommand(), nil
+	case CmdRemoveOffer:
+		return crossmodel.NewRemoveOfferCommand(), nil
+	case CmdShowOfferedEndpoint:
+		return crossmodel.NewShowOfferedEndpointCommand(), nil
+	case CmdListEndpoints:
+		return crossmodel.NewListEndpointsCommand(), nil
+	case CmdFindEndpoints:
+		return crossmodel.NewFindEndpointsCommand(), nil
+
+	// CAAS commands
+	case CmdAddK8s:
+		return caas.NewAddCAASCommand(cloudAdapter), nil
+	case CmdUpdateK8s:
+		return caas.NewUpdateCAASCommand(cloudAdapter), nil
+	case CmdRemoveK8s:
+		return caas.NewRemoveCAASCommand(cloudAdapter), nil
+
+	// Dashboard commands
+	case CmdDashboard:
+		return dashboard.NewDashboardCommand(), nil
+
+	// Resource commands
+	case CmdAttachResource:
+		return resource.NewUploadCommand(), nil
+	case CmdResources:
+		return resource.NewListCommand(), nil
+	case CmdCharmResources:
+		return resource.NewCharmResourcesCommand(), nil
+
+	// CharmHub commands
+	case CmdInfo:
+		return charmhub.NewInfoCommand(), nil
+	case CmdFind:
+		return charmhub.NewFindCommand(), nil
+	case CmdDownload:
+		return charmhub.NewDownloadCommand(), nil
+
+	// Secrets commands
+	case CmdSecrets:
+		return secrets.NewListSecretsCommand(), nil
+	case CmdShowSecret:
+		return secrets.NewShowSecretsCommand(), nil
+	case CmdAddSecret:
+		return secrets.NewAddSecretCommand(), nil
+	case CmdUpdateSecret:
+		return secrets.NewUpdateSecretCommand(), nil
+	case CmdRemoveSecret:
+		return secrets.NewRemoveSecretCommand(), nil
+	case CmdGrantSecret:
+		return secrets.NewGrantSecretCommand(), nil
+	case CmdRevokeSecret:
+		return secrets.NewRevokeSecretCommand(), nil
+
+	// Secret backends commands
+	case CmdSecretBackends:
+		return secretbackends.NewListSecretBackendsCommand(), nil
+	case CmdAddSecretBackend:
+		return secretbackends.NewAddSecretBackendCommand(), nil
+	case CmdUpdateSecretBackend:
+		return secretbackends.NewUpdateSecretBackendCommand(), nil
+	case CmdRemoveSecretBackend:
+		return secretbackends.NewRemoveSecretBackendCommand(), nil
+	case CmdShowSecretBackend:
+		return secretbackends.NewShowSecretBackendCommand(), nil
+
+	// Wait for commands
+	case CmdWaitFor:
+		return waitfor.NewWaitForCommand(), nil
+
+	default:
+		return nil, fmt.Errorf("unknown command: %s", id)
+	}
+}
+
+func (c *commandFactory) GetCommandByName(name string) (Command, error) {
+	id := JujuCommandID(name)
+	return c.GetCommand(id)
 }

@@ -32,7 +32,12 @@ type adapter struct {
 }
 
 func (a *adapter) ToolNames() []string {
-	return commandList
+	ids := GetAllCommandIDs()
+	names := make([]string, len(ids))
+	for i, id := range ids {
+		names[i] = string(id)
+	}
+	return names
 }
 
 func (a *adapter) init() {
@@ -75,7 +80,7 @@ func (a *adapter) buildEnhancedDescription(cmd Command) string {
 }
 
 func (a *adapter) GetTool(name string) (*mcp.Tool, mcpserver.ToolHandlerFunc, error) {
-	cmd, err := a.factory.GetCommand(name)
+	cmd, err := a.factory.GetCommandByName(name)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -103,8 +108,17 @@ func (a *adapter) flagSetToToolOptions(cmd Command) ([]mcp.ToolOption, error) {
 		mcp.Description("Positional arguments for the command"),
 	))
 
+	// Get disabled arguments for this command
+	disabledArgs := cmd.DisabledArgs()
+
 	flagSet.VisitAll(
 		func(flag *gnuflag.Flag) {
+			// Skip disabled arguments
+			if disabledArgs[flag.Name] {
+				log.Debug().Msgf("Skipping disabled argument: %s", flag.Name)
+				return
+			}
+
 			log.Debug().Msgf("flag: %#v", flag)
 
 			// Convert flag to ToolOption based on its type
@@ -215,7 +229,7 @@ func (a *adapter) setFlagsFromRequest(flagSet *gnuflag.FlagSet, req mcp.CallTool
 
 func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	log.Debug().Msgf("req: %#v", req)
-	cmd, err := a.factory.GetCommand(name)
+	cmd, err := a.factory.GetCommandByName(name)
 	if err != nil {
 		return nil, err
 	}
