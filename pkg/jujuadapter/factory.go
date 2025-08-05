@@ -79,7 +79,7 @@ func (c *commandFactory) GetCommand(id JujuCommandID) (Command, error) {
 		cmd:          jujuCmd,
 		info:         jujuCmd.Info(),
 		t:            time.Now(),
-		disabledArgs: def.DisabledArgs,
+		disabledArgs: def.HTTPMcpServerDisableArgs, // TODO: Make this configurable based on server type
 	}, nil
 }
 
