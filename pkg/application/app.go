@@ -62,5 +62,16 @@ func (a *application) init() error {
 		a.mcpServer.AddResource(*resource, handlerFunc)
 	}
 
+	// Register resource templates
+	resourceTemplateNames := a.adapter.ResourceTemplateNames()
+	for _, templateName := range resourceTemplateNames {
+		log.Debug().Msgf("Register mcp resource template %s", templateName)
+		template, handlerFunc, err := a.adapter.GetResourceTemplate(templateName)
+		if err != nil {
+			return err
+		}
+		a.mcpServer.AddResourceTemplate(*template, handlerFunc)
+	}
+
 	return nil
 }

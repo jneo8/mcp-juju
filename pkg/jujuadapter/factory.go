@@ -35,9 +35,22 @@ import (
 	"github.com/juju/cmd/v3"
 )
 
+// ResourceTemplateConfig defines how to handle a resource template
+type ResourceTemplateConfig struct {
+	CommandName string            // Which Juju command to use
+	URITemplate string            // URI template pattern
+	Name        string            // Display name
+	Description string            // Description
+	FixedFlags  map[string]string // Fixed flag values
+	URIToArgs   map[string]string // Map URI template variables to command arguments
+	URIToFlags  map[string]string // Map URI template variables to command flags
+}
+
 type CommandFactory interface {
 	GetCommand(id JujuCommandID) (Command, error)
 	GetCommandByName(name string) (Command, error)
+	GetResourceTemplateConfigs() map[string]ResourceTemplateConfig
+	GetResourceTemplateNames() []string
 }
 
 type commandFactory struct{}
@@ -444,4 +457,27 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 func (c *commandFactory) GetCommandByName(name string) (Command, error) {
 	id := JujuCommandID(name)
 	return c.GetCommand(id)
+}
+
+func (c *commandFactory) GetResourceTemplateConfigs() map[string]ResourceTemplateConfig {
+	return map[string]ResourceTemplateConfig{
+		"juju-config-template": {
+			CommandName: "config",
+			URITemplate: "juju://config/{application}{/config_name*}",
+			Name:        "Juju Application Configuration",
+			Description: "Get configuration for any Juju application or specific config key in JSON format",
+			FixedFlags:  map[string]string{"format": "json"},
+			URIToArgs:   map[string]string{"application": "0", "config_name": "1"}, // Map to positional args
+			URIToFlags:  map[string]string{},                                       // No URI variables map to flags for this template
+		},
+	}
+}
+
+func (c *commandFactory) GetResourceTemplateNames() []string {
+	configs := c.GetResourceTemplateConfigs()
+	names := make([]string, 0, len(configs))
+	for name := range configs {
+		names = append(names, name)
+	}
+	return names
 }

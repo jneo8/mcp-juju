@@ -19,6 +19,8 @@ type Adapter interface {
 	GetTool(name string) (*mcp.Tool, mcpserver.ToolHandlerFunc, error)
 	ToolDocResourceNames() []string
 	GetResource(name string) (*mcp.Resource, mcpserver.ResourceHandlerFunc, error)
+	ResourceTemplateNames() []string
+	GetResourceTemplate(name string) (*mcp.ResourceTemplate, mcpserver.ResourceTemplateHandlerFunc, error)
 }
 
 func NewAdapter() (Adapter, error) {
@@ -50,6 +52,10 @@ func (a *adapter) ToolDocResourceNames() []string {
 		resourceNames[i] = toolName + "-doc"
 	}
 	return resourceNames
+}
+
+func (a *adapter) ResourceTemplateNames() []string {
+	return a.factory.GetResourceTemplateNames()
 }
 
 func (a *adapter) init() {
@@ -205,22 +211,32 @@ func (a *adapter) getHandlerFunc(cmd Command) mcpserver.ToolHandlerFunc {
 	}
 }
 
-func (a *adapter) setFlagsFromRequest(flagSet *gnuflag.FlagSet, req mcp.CallToolRequest) error {
-	// Iterate through the MCP request arguments and set flag values
-	arguments, ok := req.Params.Arguments.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("invalid arguments type")
+func (a *adapter) executeCommand(ctx context.Context, config CommandExecutionConfig) (string, error) {
+	// Get the command
+	cmd, err := a.factory.GetCommandByName(config.CommandName)
+	if err != nil {
+		return "", fmt.Errorf("failed to get command '%s': %w", config.CommandName, err)
 	}
 
-	for key, value := range arguments {
-		// Skip the special "args" parameter - it's handled separately
-		if key == "args" {
-			continue
-		}
+	// Set up the command flags
+	flagSet := gnuflag.NewFlagSet(config.CommandName, gnuflag.ContinueOnError)
+	cmd.SetFlags(flagSet)
 
+	// Set fixed flags first
+	for flagName, flagValue := range config.FixedFlags {
+		flag := flagSet.Lookup(flagName)
+		if flag != nil {
+			if err := flag.Value.Set(flagValue); err != nil {
+				return "", fmt.Errorf("failed to set fixed flag '%s': %w", flagName, err)
+			}
+		}
+	}
+
+	// Set flag values from the configuration
+	for key, value := range config.FlagValues {
 		flag := flagSet.Lookup(key)
 		if flag == nil {
-			// Skip unknown flags - they might be handled elsewhere
+			// Skip unknown flags
 			continue
 		}
 
@@ -250,27 +266,58 @@ func (a *adapter) setFlagsFromRequest(flagSet *gnuflag.FlagSet, req mcp.CallTool
 		}
 
 		if err := flag.Value.Set(stringValue); err != nil {
-			return fmt.Errorf("failed to set flag %s: %w", key, err)
+			return "", fmt.Errorf("failed to set flag '%s': %w", key, err)
 		}
 	}
-	return nil
+
+	// Parse the flags (this validates the flag values)
+	if err := flagSet.Parse(false, []string{}); err != nil {
+		return "", fmt.Errorf("failed to parse flags: %w", err)
+	}
+
+	// Initialize the command with positional arguments
+	if err := cmd.Init(config.Arguments); err != nil {
+		return "", fmt.Errorf("failed to initialize command '%s': %w", config.CommandName, err)
+	}
+
+	// Execute the command
+	stdout, stderr, err := cmd.RunWithOutput(ctx)
+	if err != nil {
+		return "", fmt.Errorf("command '%s' failed: %w\nStderr: %s", config.CommandName, err, stderr)
+	}
+
+	// Combine stdout and stderr for the result
+	output := stdout
+	if stderr != "" {
+		if output != "" {
+			output += "\n"
+		}
+		output += stderr
+	}
+
+	return output, nil
+}
+
+// CommandExecutionConfig holds all the configuration needed to execute a command
+type CommandExecutionConfig struct {
+	CommandName string
+	FixedFlags  map[string]string
+	Arguments   []string
+	FlagValues  map[string]interface{}
 }
 
 func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	log.Debug().Msgf("req: %#v", req)
-	cmd, err := a.factory.GetCommandByName(name)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create flag set and populate it from the MCP request
-	flagSet := gnuflag.NewFlagSet(cmd.Name(), gnuflag.ContinueOnError)
-	cmd.SetFlags(flagSet)
 
 	// Extract positional arguments from MCP request
 	var positionalArgs []string
+	var flagValues map[string]interface{}
+
 	arguments, ok := req.Params.Arguments.(map[string]interface{})
 	if ok {
+		flagValues = make(map[string]interface{})
+
+		// Extract positional args
 		if argsInterface, exists := arguments["args"]; exists {
 			switch argsValue := argsInterface.(type) {
 			case []interface{}:
@@ -288,36 +335,24 @@ func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest)
 			}
 		}
 		log.Debug().Msgf("Extracted positional args (filtered): %v", positionalArgs)
-	}
 
-	// Convert MCP request arguments to flag values
-	if err := a.setFlagsFromRequest(flagSet, req); err != nil {
-		return nil, err
-	}
-
-	// Parse the flags (this validates the flag values)
-	if err := flagSet.Parse(false, []string{}); err != nil {
-		return nil, err
-	}
-
-	// Initialize the command with positional arguments
-	if err := cmd.Init(positionalArgs); err != nil {
-		return nil, err
-	}
-
-	stdout, stderr, err := cmd.RunWithOutput(ctx)
-	if err != nil {
-		// Provide more context about the command that failed
-		return nil, fmt.Errorf("command '%s' failed: %w\nStderr: %s", name, err, stderr)
-	}
-
-	// Combine stdout and stderr for the result
-	output := stdout
-	if stderr != "" {
-		if output != "" {
-			output += "\n"
+		// Extract flag values
+		for key, value := range arguments {
+			if key != "args" {
+				flagValues[key] = value
+			}
 		}
-		output += stderr
+	}
+
+	config := CommandExecutionConfig{
+		CommandName: name,
+		Arguments:   positionalArgs,
+		FlagValues:  flagValues,
+	}
+
+	output, err := a.executeCommand(ctx, config)
+	if err != nil {
+		return nil, err
 	}
 
 	return &mcp.CallToolResult{
@@ -364,3 +399,97 @@ func (a *adapter) GetResource(name string) (*mcp.Resource, mcpserver.ResourceHan
 
 	return nil, nil, fmt.Errorf("resource '%s' not found", name)
 }
+
+func (a *adapter) GetResourceTemplate(name string) (*mcp.ResourceTemplate, mcpserver.ResourceTemplateHandlerFunc, error) {
+	configs := a.factory.GetResourceTemplateConfigs()
+	config, exists := configs[name]
+	if !exists {
+		return nil, nil, fmt.Errorf("resource template '%s' not found", name)
+	}
+
+	template := mcp.NewResourceTemplate(
+		config.URITemplate,
+		config.Name,
+		mcp.WithTemplateDescription(config.Description),
+		mcp.WithTemplateMIMEType("application/json"),
+	)
+
+	handlerFunc := func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+		return a.handleResourceTemplate(ctx, req, config)
+	}
+
+	return &template, handlerFunc, nil
+}
+
+func (a *adapter) handleResourceTemplate(ctx context.Context, req mcp.ReadResourceRequest, config ResourceTemplateConfig) ([]mcp.ResourceContents, error) {
+	uri := req.Params.URI
+
+	// Parse URI parameters using the template configuration
+	uriParams, err := parseURIParameters(uri, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URI parameters: %w", err)
+	}
+
+	// Prepare positional arguments from URI parameters
+	var args []string
+	maxArgIndex := -1
+	argMap := make(map[int]string)
+
+	for uriVar, argIndexStr := range config.URIToArgs {
+		if value, exists := uriParams[uriVar]; exists && value != "" {
+			argIndex, err := strconv.Atoi(argIndexStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid argument index '%s' for URI parameter '%s'", argIndexStr, uriVar)
+			}
+			argMap[argIndex] = value
+			if argIndex > maxArgIndex {
+				maxArgIndex = argIndex
+			}
+		}
+	}
+
+	// Build args array in correct order
+	if maxArgIndex >= 0 {
+		args = make([]string, maxArgIndex+1)
+		for i := 0; i <= maxArgIndex; i++ {
+			if value, exists := argMap[i]; exists {
+				args[i] = value
+			} else {
+				args[i] = "" // Fill gaps with empty strings
+			}
+		}
+		// Remove trailing empty strings
+		for len(args) > 0 && args[len(args)-1] == "" {
+			args = args[:len(args)-1]
+		}
+	}
+
+	// Prepare flag values from URI parameters
+	flagValues := make(map[string]interface{})
+	for uriVar, flagName := range config.URIToFlags {
+		if value, exists := uriParams[uriVar]; exists && value != "" {
+			flagValues[flagName] = value
+		}
+	}
+
+	execConfig := CommandExecutionConfig{
+		CommandName: config.CommandName,
+		FixedFlags:  config.FixedFlags,
+		Arguments:   args,
+		FlagValues:  flagValues,
+	}
+
+	output, err := a.executeCommand(ctx, execConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return []mcp.ResourceContents{
+		mcp.TextResourceContents{
+			URI:      uri,
+			MIMEType: "application/json",
+			Text:     output,
+		},
+	}, nil
+}
+
