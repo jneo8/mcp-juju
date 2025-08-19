@@ -17,6 +17,8 @@ import (
 type Adapter interface {
 	ToolNames() []string
 	GetTool(name string) (*mcp.Tool, mcpserver.ToolHandlerFunc, error)
+	ToolDocResourceNames() []string
+	GetResource(name string) (*mcp.Resource, mcpserver.ResourceHandlerFunc, error)
 }
 
 func NewAdapter() (Adapter, error) {
@@ -38,6 +40,16 @@ func (a *adapter) ToolNames() []string {
 		names[i] = string(id)
 	}
 	return names
+}
+
+func (a *adapter) ToolDocResourceNames() []string {
+	// Create documentation resources for each tool (1-to-1 mapping)
+	toolNames := a.ToolNames()
+	resourceNames := make([]string, len(toolNames))
+	for i, toolName := range toolNames {
+		resourceNames[i] = toolName + "-doc"
+	}
+	return resourceNames
 }
 
 func (a *adapter) init() {
@@ -65,16 +77,39 @@ func (a *adapter) buildEnhancedDescription(cmd Command) string {
 		desc.WriteString(fmt.Sprintf("\n\nArguments: %s", info.Args))
 	}
 
-	// Add long documentation if available and different from purpose
-	if info.Doc != "" && info.Doc != info.Purpose {
-		desc.WriteString(fmt.Sprintf("\n\nDetails:\n%s", strings.TrimSpace(info.Doc)))
-	}
-
-	// Note: Examples and SeeAlso fields not available in cmd/v3
-
 	result := desc.String()
 	if result == "" {
 		return cmd.ToolDescription()
+	}
+	return result
+}
+
+func (a *adapter) buildDocumentationContent(cmd Command) string {
+	info := cmd.Info()
+	if info == nil {
+		return "No detailed documentation available."
+	}
+
+	var content strings.Builder
+
+	// Start with purpose
+	if info.Purpose != "" {
+		content.WriteString(fmt.Sprintf("# %s\n\n%s\n\n", cmd.Name(), info.Purpose))
+	}
+
+	// Add arguments
+	if info.Args != "" {
+		content.WriteString(fmt.Sprintf("## Arguments\n\n%s\n\n", info.Args))
+	}
+
+	// Add detailed documentation
+	if info.Doc != "" && info.Doc != info.Purpose {
+		content.WriteString(fmt.Sprintf("## Details\n\n%s\n", strings.TrimSpace(info.Doc)))
+	}
+
+	result := content.String()
+	if result == "" {
+		return "No detailed documentation available."
 	}
 	return result
 }
@@ -115,17 +150,12 @@ func (a *adapter) flagSetToToolOptions(cmd Command) ([]mcp.ToolOption, error) {
 		func(flag *gnuflag.Flag) {
 			// Skip disabled arguments
 			if disabledArgs[flag.Name] {
-				log.Debug().Msgf("Skipping disabled argument: %s", flag.Name)
 				return
 			}
-
-			log.Debug().Msgf("flag: %#v", flag)
 
 			// Convert flag to ToolOption based on its type
 			// Use reflection to determine the type since concrete types may not be exported
 			flagType := reflect.TypeOf(flag.Value).String()
-			log.Debug().Msgf("flag type: %s", flagType)
-
 			switch {
 			case strings.Contains(flagType, "boolValue") || strings.Contains(flagType, "Bool"):
 				defaultBool := flag.DefValue == "true"
@@ -159,7 +189,6 @@ func (a *adapter) flagSetToToolOptions(cmd Command) ([]mcp.ToolOption, error) {
 				}
 			default:
 				// For unknown types or string types, treat as string
-				log.Debug().Msgf("Unknown or string flag type %s for flag %s, treating as string", flagType, flag.Name)
 				toolOptions = append(toolOptions, mcp.WithString(flag.Name,
 					mcp.Description(flag.Usage),
 					mcp.DefaultString(flag.DefValue),
@@ -299,4 +328,39 @@ func (a *adapter) run(name string, ctx context.Context, req mcp.CallToolRequest)
 			},
 		},
 	}, nil
+}
+
+func (a *adapter) GetResource(name string) (*mcp.Resource, mcpserver.ResourceHandlerFunc, error) {
+	// Check if this is a documentation resource (ends with -doc)
+	if strings.HasSuffix(name, "-doc") {
+		toolName := strings.TrimSuffix(name, "-doc")
+		cmd, err := a.factory.GetCommandByName(toolName)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Create documentation resource
+		uri := fmt.Sprintf("juju://%s", name)
+		resource := mcp.NewResource(
+			uri,
+			name,
+			mcp.WithResourceDescription(fmt.Sprintf("Documentation for %s command", toolName)),
+			mcp.WithMIMEType("text/markdown"),
+		)
+
+		handlerFunc := func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+			content := a.buildDocumentationContent(cmd)
+			return []mcp.ResourceContents{
+				mcp.TextResourceContents{
+					URI:      req.Params.URI,
+					MIMEType: "text/markdown",
+					Text:     content,
+				},
+			}, nil
+		}
+
+		return &resource, handlerFunc, nil
+	}
+
+	return nil, nil, fmt.Errorf("resource '%s' not found", name)
 }

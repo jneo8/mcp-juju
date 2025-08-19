@@ -5,8 +5,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/juju/gnuflag"
 	"github.com/juju/cmd/v3"
+	"github.com/juju/gnuflag"
 )
 
 // commandList is now generated from command definitions
@@ -71,12 +71,12 @@ func (c *command) getContextWithOutput(ctx context.Context) (*cmd.Context, *byte
 		return nil, nil, nil, err
 	}
 	// Note: cmd/v3 Context might not have Context field
-	
+
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	cmdCtx.Stdout = stdout
 	cmdCtx.Stderr = stderr
-	
+
 	return cmdCtx, stdout, stderr, nil
 }
 
@@ -102,7 +102,7 @@ func (c *command) RunWithOutput(ctx context.Context) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	
+
 	err = c.cmd.Run(cmdCtx)
 	return stdout.String(), stderr.String(), err
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/jneo8/mcp-juju/pkg/jujuadapter"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
 )
 
 type Application interface {
@@ -39,13 +40,27 @@ func (a *application) RunServer() error {
 }
 
 func (a *application) init() error {
+	// Register tools
 	toolNames := a.adapter.ToolNames()
 	for _, toolName := range toolNames {
+		log.Debug().Msgf("Register mcp tool %s", toolName)
 		tool, handlerFunc, err := a.adapter.GetTool(toolName)
 		if err != nil {
 			return err
 		}
 		a.mcpServer.AddTool(*tool, handlerFunc)
 	}
+
+	// Register documentation resources
+	docResourceNames := a.adapter.ToolDocResourceNames()
+	for _, resourceName := range docResourceNames {
+		log.Debug().Msgf("Register mcp resource %s", resourceName)
+		resource, handlerFunc, err := a.adapter.GetResource(resourceName)
+		if err != nil {
+			return err
+		}
+		a.mcpServer.AddResource(*resource, handlerFunc)
+	}
+
 	return nil
 }
