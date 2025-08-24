@@ -1,0 +1,89 @@
+name: mcp-juju
+base: core24
+version: '0.0.1'
+summary: MCP server for Juju management and automation
+description: |
+  MCP Juju is a Model Context Protocol (MCP) server that provides integration
+  with Juju (Ubuntu's application modeling tool). This server exposes Juju 
+  functionality through MCP tools, allowing AI assistants like Claude to manage
+  Juju controllers, models, and applications through 100+ Juju CLI commands.
+  
+  The server supports both HTTP and stdio communication modes, making it flexible
+  for different deployment scenarios. It converts all Juju CLI commands into 
+  MCP tools with automatic flag detection and enhanced descriptions.
+  
+  **Key Features:**
+  - Support for all Juju commands functionality as MCP tools
+  - HTTP and stdio server modes
+  - Automatic parameter type detection from Juju command flags  
+  - Enhanced command descriptions from Juju documentation
+  - Context-aware operations with cancellation support
+  - Structured logging with configurable levels
+  
+  **Requirements:**
+  - Juju 3.6 (currently supported version)
+  - Network access for MCP communication
+  - Appropriate Juju credentials and access permissions
+
+grade: stable
+confinement: strict
+
+apps:
+  # HTTP MCP server (default)
+  mcp-juju:
+    command: bin/mcp-juju
+    plugs:
+      - home
+      - network
+      - network-bind
+      - ssh-keys
+      - removable-media
+      - dot-local-share-juju
+    environment:
+      PATH: $SNAP/bin:$PATH
+      JUJU_DATA: $SNAP_REAL_HOME/.local/share/juju
+
+  # Daemon service for HTTP server
+  mcp-juju-daemon:
+    command: bin/mcp-juju --server-type http
+    daemon: simple
+    daemon-scope: user
+    restart-condition: on-abnormal
+    plugs:
+      - home
+      - network
+      - network-bind
+      - ssh-keys
+      - removable-media
+      - dot-local-share-juju
+    environment:
+      PATH: $SNAP/bin:$PATH
+      JUJU_DATA: $SNAP_REAL_HOME/.local/share/juju
+
+parts:
+  mcp-juju:
+    plugin: go
+    build-snaps: [go/latest/stable]
+    source: .
+    build-environment:
+      - CGO_ENABLED: "0"
+      - GOOS: linux
+      - GOARCH: $CRAFT_ARCH_BUILD_FOR
+    
+    # Stage packages for dependencies
+    stage-packages:
+      - ca-certificates
+      - openssh-client
+
+slots:
+  mcp-server:
+    interface: content
+    content: mcp-server
+    read:
+      - $SNAP/bin
+
+plugs:
+  dot-local-share-juju:
+    interface: personal-files
+    write:
+      - $HOME/.local/share/juju

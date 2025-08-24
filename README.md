@@ -21,10 +21,38 @@ This MCP server supports most of the features that the Juju CLI provides (100+ c
 
 ### Installation
 
+#### From Source
+
 ```bash
 git clone https://github.com/jneo8/mcp-juju.git
 cd mcp-juju
 go build .
+```
+
+#### From Snap Package
+
+**Note**: The snap package includes a daemon service that requires experimental user daemon support.
+
+1. Enable experimental user daemons:
+```bash
+sudo snap set system experimental.user-daemons=true
+```
+
+2. Install the snap:
+```bash
+sudo snap install mcp-juju
+# Or install from local build:
+sudo snap install ./mcp-juju_*.snap --dangerous
+```
+
+3. Connect the required interface for Juju data access:
+```bash
+sudo snap connect mcp-juju:dot-local-share-juju
+```
+
+4. Start the daemon (optional):
+```bash
+sudo snap start mcp-juju.mcp-juju-daemon
 ```
 
 ### Running
