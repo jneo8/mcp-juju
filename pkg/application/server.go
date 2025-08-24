@@ -18,3 +18,8 @@ func runStreamableHTTPServer(server *server.StreamableHTTPServer, cfg config.Con
 	log.Debug().Msgf("Run Streamable HTTP Server at %s", cfg.URL())
 	return server.Start(fmt.Sprintf(":%d", cfg.Port))
 }
+
+func runStdioServer(mcpServer *server.MCPServer) error {
+	log.Debug().Msg("Run Stdio Server")
+	return server.ServeStdio(mcpServer)
+}

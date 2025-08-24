@@ -16,6 +16,7 @@ var cfg config.Config
 func init() {
 	rootCmd.Flags().String("port", "8080", "Port to server on")
 	rootCmd.Flags().String("endpoint", "/mcp", "Endpoint path for the server")
+	rootCmd.Flags().String("server-type", "http", "Server type (http or stdio)")
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
 }
 
@@ -50,6 +51,9 @@ func persistentPreRun(cmd *cobra.Command, args []string) error {
 	}
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return fmt.Errorf("unable to decode config")
+	}
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("config validation failed: %w", err)
 	}
 	return nil
 }

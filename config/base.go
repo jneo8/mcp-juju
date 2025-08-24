@@ -5,4 +5,8 @@ const (
 	AppName       = "mcp-juju"
 	EnvPrefix     = "MCP_JUJU"
 	MCPServerName = "mcp-juju-server"
+
+	// Server types
+	ServerTypeHTTP  = "http"
+	ServerTypeStdio = "stdio"
 )

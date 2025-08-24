@@ -35,6 +35,9 @@ func NewApplication(cfg config.Config, adapter jujuadapter.Adapter) (Application
 }
 
 func (a *application) RunServer() error {
+	if a.config.IsStdioServer() {
+		return runStdioServer(a.mcpServer)
+	}
 	streamableHTTPServer := newStreamableHTTPServer(a.mcpServer, a.config)
 	return runStreamableHTTPServer(streamableHTTPServer, a.config)
 }

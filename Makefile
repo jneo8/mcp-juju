@@ -1,12 +1,17 @@
 ##@ Development
 
-.PHONY: run run-debug fmt vet lint
+.PHONY: run run-debug fmt vet lint build run-http run-stdio
 
 run: ## Run the application
-	go run .
+	go run . --server-type stdio
+
+run-http: ## Run the application with streamable http mcp server
+	go run . --server-type http
+
+run-stdio:  run ## Run the application with stdio mcp server
 
 run-debug: ## Run the application with debug logging
-	go run . --debug
+	go run . --server-type stdio --debug
 
 fmt: ## Format Go code
 	go fmt ./...
@@ -15,6 +20,9 @@ vet: ## Run go vet
 	go vet ./...
 
 lint: fmt vet ## Run all linters (format and vet)
+
+build:   ## Build go binary
+	go build .
 
 ##@ Testing
 
