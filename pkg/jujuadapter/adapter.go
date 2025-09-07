@@ -149,16 +149,8 @@ func (a *adapter) flagSetToToolOptions(cmd Command) ([]mcp.ToolOption, error) {
 		mcp.Description("Positional arguments for the command"),
 	))
 
-	// Get disabled arguments for this command
-	disabledArgs := cmd.DisabledArgs()
-
 	flagSet.VisitAll(
 		func(flag *gnuflag.Flag) {
-			// Skip disabled arguments
-			if disabledArgs[flag.Name] {
-				return
-			}
-
 			// Convert flag to ToolOption based on its type
 			// Use reflection to determine the type since concrete types may not be exported
 			flagType := reflect.TypeOf(flag.Value).String()

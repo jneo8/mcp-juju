@@ -16,7 +16,7 @@ var cfg config.Config
 func init() {
 	rootCmd.Flags().String("port", "8080", "Port to server on")
 	rootCmd.Flags().String("endpoint", "/mcp", "Endpoint path for the server")
-	rootCmd.Flags().String("server-type", "http", "Server type (http or stdio)")
+	rootCmd.Flags().String("server-type", "stdio", "Server type (http or stdio)")
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
 }
 

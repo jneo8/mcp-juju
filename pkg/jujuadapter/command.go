@@ -21,15 +21,12 @@ type Command interface {
 	Info() *cmd.Info
 	Run(context.Context) error
 	RunWithOutput(context.Context) (string, string, error)
-	// DisabledArgs returns a set of argument names that should be disabled for this command
-	DisabledArgs() map[string]bool
 }
 
 type command struct {
-	cmd          cmd.Command
-	info         *cmd.Info
-	t            time.Time
-	disabledArgs map[string]bool
+	cmd  cmd.Command
+	info *cmd.Info
+	t    time.Time
 }
 
 func (c *command) Name() string {
@@ -44,17 +41,6 @@ func (c *command) Info() *cmd.Info {
 	return c.info
 }
 
-func (c *command) DisabledArgs() map[string]bool {
-	if c.disabledArgs == nil {
-		return make(map[string]bool)
-	}
-	// Return a copy to prevent external modification
-	result := make(map[string]bool)
-	for k, v := range c.disabledArgs {
-		result[k] = v
-	}
-	return result
-}
 
 func (c *command) getContext(ctx context.Context) (*cmd.Context, error) {
 	cmdCtx, err := cmd.DefaultContext()

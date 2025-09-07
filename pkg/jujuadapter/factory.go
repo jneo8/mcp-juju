@@ -74,11 +74,6 @@ func (cloudToCommandAdaptor) WritePersonalCloudMetadata(cloudsMap map[string]clo
 }
 
 func (c *commandFactory) GetCommand(id JujuCommandID) (Command, error) {
-	def, exists := GetCommandDefinition(id)
-	if !exists {
-		return nil, fmt.Errorf("unknown command: %s", id)
-	}
-
 	jujuCmd, err := c.createJujuCommand(id)
 	if err != nil {
 		return nil, err
@@ -89,10 +84,9 @@ func (c *commandFactory) GetCommand(id JujuCommandID) (Command, error) {
 	}
 
 	return &command{
-		cmd:          jujuCmd,
-		info:         jujuCmd.Info(),
-		t:            time.Now(),
-		disabledArgs: def.HTTPMcpServerDisableArgs, // TODO: Make this configurable based on server type
+		cmd:  jujuCmd,
+		info: jujuCmd.Info(),
+		t:    time.Now(),
 	}, nil
 }
 
