@@ -1,6 +1,6 @@
 name: mcp-juju
 base: core24
-version: '0.0.1'
+version: '0.0.2'
 summary: MCP server for Juju management and automation
 description: |
   MCP Juju is a Model Context Protocol (MCP) server that provides integration
@@ -33,12 +33,29 @@ apps:
   mcp-juju:
     command: bin/mcp-juju
     plugs:
-      - home
       - network
       - network-bind
       - ssh-keys
       - removable-media
+      - lxd
+      # Needed to read the JAAS plugin binary
+      - jaas-plugin
+      # Needed so that juju can still use the real ~/.local/share/juju.
       - dot-local-share-juju
+      # Needed to read lxd config.
+      - config-lxd
+      # Needed to read ~/.kube, ~/.novarc, ~/.aws etc.
+      - dot-aws
+      - dot-azure
+      - dot-google
+      - dot-kubernetes
+      - dot-maas
+      - dot-openstack
+      - dot-oracle
+      # Needed so that arbitrary cloud/credential yaml files can be read and backups written.
+      - home
+      # Needed to that SSO via the web browser can work.
+      - desktop
     environment:
       PATH: $SNAP/bin:$PATH
       JUJU_DATA: $SNAP_REAL_HOME/.local/share/juju
@@ -50,12 +67,28 @@ apps:
     daemon-scope: user
     restart-condition: on-abnormal
     plugs:
-      - home
       - network
       - network-bind
       - ssh-keys
-      - removable-media
+      - lxd
+      # Needed to read the JAAS plugin binary
+      - jaas-plugin
+      # Needed so that juju can still use the real ~/.local/share/juju.
       - dot-local-share-juju
+      # Needed to read lxd config.
+      - config-lxd
+      # Needed to read ~/.kube, ~/.novarc, ~/.aws etc.
+      - dot-aws
+      - dot-azure
+      - dot-google
+      - dot-kubernetes
+      - dot-maas
+      - dot-openstack
+      - dot-oracle
+      # Needed so that arbitrary cloud/credential yaml files can be read and backups written.
+      - home
+      # Needed to that SSO via the web browser can work.
+      - desktop
     environment:
       PATH: $SNAP/bin:$PATH
       JUJU_DATA: $SNAP_REAL_HOME/.local/share/juju
@@ -83,7 +116,55 @@ slots:
       - $SNAP/bin
 
 plugs:
+  peers:
+    interface: content
+    content: microk8s
+    target: $SNAP_DATA/microk8s
+
+  jaas-plugin:
+    interface: content
+    content: jaas-plugin
+    target: $SNAP/opt/jaas/bin
   dot-local-share-juju:
     interface: personal-files
     write:
       - $HOME/.local/share/juju
+  config-lxd:
+    interface: personal-files
+    read:
+      - $HOME/snap/lxd/common/config
+
+  dot-aws:
+    interface: personal-files
+    read:
+      - $HOME/.aws
+
+  dot-azure:
+    interface: personal-files
+    read:
+      - $HOME/.azure
+
+  dot-google:
+    interface: personal-files
+    read:
+      - $HOME/.config/gcloud
+
+  dot-kubernetes:
+    interface: personal-files
+    read:
+      - $HOME/.kube
+
+  dot-maas:
+    interface: personal-files
+    read:
+      - $HOME/.maasrc
+
+  dot-oracle:
+    interface: personal-files
+    read:
+      - $HOME/.oci
+
+  dot-openstack:
+    interface: personal-files
+    read:
+      - $HOME/.novarc
