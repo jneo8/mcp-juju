@@ -11,7 +11,8 @@ type Config struct {
 	Port       int
 	Debug      bool
 	EndPoint   string
-	ServerType string `mapstructure:"server-type"`
+	ServerType string   `mapstructure:"server-type"`
+	ToolNames  []string `mapstructure:"tool-names"`
 }
 
 func (c *Config) URL() string {

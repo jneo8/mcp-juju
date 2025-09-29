@@ -18,6 +18,7 @@ func init() {
 	rootCmd.Flags().String("endpoint", "/mcp", "Endpoint path for the server")
 	rootCmd.Flags().String("server-type", "stdio", "Server type (http or stdio)")
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
+	rootCmd.Flags().StringSlice("tool-names", []string{}, "List of tool names to register (empty means all tools)")
 }
 
 var rootCmd = &cobra.Command{
@@ -29,7 +30,7 @@ var rootCmd = &cobra.Command{
 
 func run(cmd *cobra.Command, args []string) error {
 
-	adapter, err := jujuadapter.NewAdapter()
+	adapter, err := jujuadapter.NewAdapter(cfg.ToolNames)
 	if err != nil {
 		return err
 	}

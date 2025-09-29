@@ -23,19 +23,27 @@ type Adapter interface {
 	GetResourceTemplate(name string) (*mcp.ResourceTemplate, mcpserver.ResourceTemplateHandlerFunc, error)
 }
 
-func NewAdapter() (Adapter, error) {
+func NewAdapter(toolNames []string) (Adapter, error) {
 	a := &adapter{
-		factory: &commandFactory{},
+		factory:   &commandFactory{},
+		toolNames: toolNames,
 	}
 	a.init()
 	return a, nil
 }
 
 type adapter struct {
-	factory CommandFactory
+	factory   CommandFactory
+	toolNames []string
 }
 
 func (a *adapter) ToolNames() []string {
+	// If specific tool names are configured, use those
+	if len(a.toolNames) > 0 {
+		return a.toolNames
+	}
+
+	// Otherwise, return all available command IDs
 	ids := GetAllCommandIDs()
 	names := make([]string, len(ids))
 	for i, id := range ids {
