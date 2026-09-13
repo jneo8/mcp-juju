@@ -1,6 +1,6 @@
 # Reference
 
-Precise descriptions of what `mcp-juju` exposes and accepts. For task-oriented instructions see the main [README](../../README.md).
+Precise descriptions of what `mcp-juju` exposes and accepts. For a guided first run see the [tutorial](../tutorials/getting-started.md); for task-oriented instructions see the main [README](../../README.md).
 
 | Page | Covers |
 |---|---|
