@@ -492,4 +492,3 @@ func (a *adapter) handleResourceTemplate(ctx context.Context, req mcp.ReadResour
 		},
 	}, nil
 }
-

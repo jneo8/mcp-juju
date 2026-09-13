@@ -35,7 +35,7 @@ func TestNewStreamableHTTPServer(t *testing.T) {
 
 func TestNewStreamableHTTPServer_WithDifferentConfig(t *testing.T) {
 	// Test with different configuration values
-	
+
 	// Arrange
 	mcpServer := server.NewMCPServer(
 		"test-server-2",
@@ -61,7 +61,7 @@ func TestNewStreamableHTTPServer_NilMCPServer(t *testing.T) {
 	// Test behavior with nil MCP server
 	// Note: This might panic depending on the underlying implementation
 	// but it's good to document the expected behavior
-	
+
 	// Arrange
 	cfg := config.Config{
 		Port:     8080,
@@ -82,7 +82,7 @@ func TestNewStreamableHTTPServer_NilMCPServer(t *testing.T) {
 func TestRunStreamableHTTPServer_FormatCheck(t *testing.T) {
 	// This test verifies the address format but doesn't actually start the server
 	// to avoid binding to ports during testing
-	
+
 	// Arrange
 	mcpServer := server.NewMCPServer(
 		"test-server",
@@ -132,10 +132,10 @@ func TestRunStreamableHTTPServer_FormatCheck(t *testing.T) {
 
 			// Act - verify the expected address format
 			expectedAddr := fmt.Sprintf(":%d", tc.config.Port)
-			
+
 			// Assert
 			assert.Equal(t, tc.expectedFormat, expectedAddr)
-			
+
 			// We also verify that the URL method works correctly
 			expectedURL := fmt.Sprintf("http://localhost:%d%s", tc.config.Port, tc.config.EndPoint)
 			assert.Equal(t, expectedURL, tc.config.URL())
@@ -145,7 +145,7 @@ func TestRunStreamableHTTPServer_FormatCheck(t *testing.T) {
 
 func TestConfig_URL(t *testing.T) {
 	// Test the URL generation method from config
-	
+
 	testCases := []struct {
 		name        string
 		config      config.Config
@@ -198,7 +198,7 @@ func TestConfig_URL(t *testing.T) {
 
 func TestConfig_StreamableHTTPOptions(t *testing.T) {
 	// Test the StreamableHTTPOptions method
-	
+
 	// Arrange
 	cfg := config.Config{
 		Port:     8080,
@@ -217,7 +217,7 @@ func TestConfig_StreamableHTTPOptions(t *testing.T) {
 
 func TestConfig_StreamableHTTPOptions_DifferentEndpoints(t *testing.T) {
 	// Test StreamableHTTPOptions with different endpoint configurations
-	
+
 	testCases := []struct {
 		name     string
 		endpoint string

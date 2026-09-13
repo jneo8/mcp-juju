@@ -41,7 +41,6 @@ func (c *command) Info() *cmd.Info {
 	return c.info
 }
 
-
 func (c *command) getContext(ctx context.Context) (*cmd.Context, error) {
 	cmdCtx, err := cmd.DefaultContext()
 	if err != nil {

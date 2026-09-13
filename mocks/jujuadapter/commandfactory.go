@@ -37,11 +37,73 @@ func (_m *MockCommandFactory) EXPECT() *MockCommandFactory_Expecter {
 }
 
 // GetCommand provides a mock function for the type MockCommandFactory
-func (_mock *MockCommandFactory) GetCommand(name string) (jujuadapter.Command, error) {
-	ret := _mock.Called(name)
+func (_mock *MockCommandFactory) GetCommand(id jujuadapter.JujuCommandID) (jujuadapter.Command, error) {
+	ret := _mock.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCommand")
+	}
+
+	var r0 jujuadapter.Command
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(jujuadapter.JujuCommandID) (jujuadapter.Command, error)); ok {
+		return returnFunc(id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(jujuadapter.JujuCommandID) jujuadapter.Command); ok {
+		r0 = returnFunc(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(jujuadapter.Command)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(jujuadapter.JujuCommandID) error); ok {
+		r1 = returnFunc(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCommandFactory_GetCommand_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommand'
+type MockCommandFactory_GetCommand_Call struct {
+	*mock.Call
+}
+
+// GetCommand is a helper method to define mock.On call
+//   - id jujuadapter.JujuCommandID
+func (_e *MockCommandFactory_Expecter) GetCommand(id interface{}) *MockCommandFactory_GetCommand_Call {
+	return &MockCommandFactory_GetCommand_Call{Call: _e.mock.On("GetCommand", id)}
+}
+
+func (_c *MockCommandFactory_GetCommand_Call) Run(run func(id jujuadapter.JujuCommandID)) *MockCommandFactory_GetCommand_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 jujuadapter.JujuCommandID
+		if args[0] != nil {
+			arg0 = args[0].(jujuadapter.JujuCommandID)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCommandFactory_GetCommand_Call) Return(command jujuadapter.Command, err error) *MockCommandFactory_GetCommand_Call {
+	_c.Call.Return(command, err)
+	return _c
+}
+
+func (_c *MockCommandFactory_GetCommand_Call) RunAndReturn(run func(id jujuadapter.JujuCommandID) (jujuadapter.Command, error)) *MockCommandFactory_GetCommand_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCommandByName provides a mock function for the type MockCommandFactory
+func (_mock *MockCommandFactory) GetCommandByName(name string) (jujuadapter.Command, error) {
+	ret := _mock.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommandByName")
 	}
 
 	var r0 jujuadapter.Command
@@ -64,18 +126,18 @@ func (_mock *MockCommandFactory) GetCommand(name string) (jujuadapter.Command, e
 	return r0, r1
 }
 
-// MockCommandFactory_GetCommand_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommand'
-type MockCommandFactory_GetCommand_Call struct {
+// MockCommandFactory_GetCommandByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommandByName'
+type MockCommandFactory_GetCommandByName_Call struct {
 	*mock.Call
 }
 
-// GetCommand is a helper method to define mock.On call
+// GetCommandByName is a helper method to define mock.On call
 //   - name string
-func (_e *MockCommandFactory_Expecter) GetCommand(name interface{}) *MockCommandFactory_GetCommand_Call {
-	return &MockCommandFactory_GetCommand_Call{Call: _e.mock.On("GetCommand", name)}
+func (_e *MockCommandFactory_Expecter) GetCommandByName(name interface{}) *MockCommandFactory_GetCommandByName_Call {
+	return &MockCommandFactory_GetCommandByName_Call{Call: _e.mock.On("GetCommandByName", name)}
 }
 
-func (_c *MockCommandFactory_GetCommand_Call) Run(run func(name string)) *MockCommandFactory_GetCommand_Call {
+func (_c *MockCommandFactory_GetCommandByName_Call) Run(run func(name string)) *MockCommandFactory_GetCommandByName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
@@ -88,12 +150,104 @@ func (_c *MockCommandFactory_GetCommand_Call) Run(run func(name string)) *MockCo
 	return _c
 }
 
-func (_c *MockCommandFactory_GetCommand_Call) Return(command jujuadapter.Command, err error) *MockCommandFactory_GetCommand_Call {
+func (_c *MockCommandFactory_GetCommandByName_Call) Return(command jujuadapter.Command, err error) *MockCommandFactory_GetCommandByName_Call {
 	_c.Call.Return(command, err)
 	return _c
 }
 
-func (_c *MockCommandFactory_GetCommand_Call) RunAndReturn(run func(name string) (jujuadapter.Command, error)) *MockCommandFactory_GetCommand_Call {
+func (_c *MockCommandFactory_GetCommandByName_Call) RunAndReturn(run func(name string) (jujuadapter.Command, error)) *MockCommandFactory_GetCommandByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetResourceTemplateConfigs provides a mock function for the type MockCommandFactory
+func (_mock *MockCommandFactory) GetResourceTemplateConfigs() map[string]jujuadapter.ResourceTemplateConfig {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetResourceTemplateConfigs")
+	}
+
+	var r0 map[string]jujuadapter.ResourceTemplateConfig
+	if returnFunc, ok := ret.Get(0).(func() map[string]jujuadapter.ResourceTemplateConfig); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]jujuadapter.ResourceTemplateConfig)
+		}
+	}
+	return r0
+}
+
+// MockCommandFactory_GetResourceTemplateConfigs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResourceTemplateConfigs'
+type MockCommandFactory_GetResourceTemplateConfigs_Call struct {
+	*mock.Call
+}
+
+// GetResourceTemplateConfigs is a helper method to define mock.On call
+func (_e *MockCommandFactory_Expecter) GetResourceTemplateConfigs() *MockCommandFactory_GetResourceTemplateConfigs_Call {
+	return &MockCommandFactory_GetResourceTemplateConfigs_Call{Call: _e.mock.On("GetResourceTemplateConfigs")}
+}
+
+func (_c *MockCommandFactory_GetResourceTemplateConfigs_Call) Run(run func()) *MockCommandFactory_GetResourceTemplateConfigs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockCommandFactory_GetResourceTemplateConfigs_Call) Return(stringToResourceTemplateConfig map[string]jujuadapter.ResourceTemplateConfig) *MockCommandFactory_GetResourceTemplateConfigs_Call {
+	_c.Call.Return(stringToResourceTemplateConfig)
+	return _c
+}
+
+func (_c *MockCommandFactory_GetResourceTemplateConfigs_Call) RunAndReturn(run func() map[string]jujuadapter.ResourceTemplateConfig) *MockCommandFactory_GetResourceTemplateConfigs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetResourceTemplateNames provides a mock function for the type MockCommandFactory
+func (_mock *MockCommandFactory) GetResourceTemplateNames() []string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetResourceTemplateNames")
+	}
+
+	var r0 []string
+	if returnFunc, ok := ret.Get(0).(func() []string); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	return r0
+}
+
+// MockCommandFactory_GetResourceTemplateNames_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResourceTemplateNames'
+type MockCommandFactory_GetResourceTemplateNames_Call struct {
+	*mock.Call
+}
+
+// GetResourceTemplateNames is a helper method to define mock.On call
+func (_e *MockCommandFactory_Expecter) GetResourceTemplateNames() *MockCommandFactory_GetResourceTemplateNames_Call {
+	return &MockCommandFactory_GetResourceTemplateNames_Call{Call: _e.mock.On("GetResourceTemplateNames")}
+}
+
+func (_c *MockCommandFactory_GetResourceTemplateNames_Call) Run(run func()) *MockCommandFactory_GetResourceTemplateNames_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockCommandFactory_GetResourceTemplateNames_Call) Return(strings []string) *MockCommandFactory_GetResourceTemplateNames_Call {
+	_c.Call.Return(strings)
+	return _c
+}
+
+func (_c *MockCommandFactory_GetResourceTemplateNames_Call) RunAndReturn(run func() []string) *MockCommandFactory_GetResourceTemplateNames_Call {
 	_c.Call.Return(run)
 	return _c
 }

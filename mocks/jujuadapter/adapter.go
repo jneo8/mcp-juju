@@ -37,6 +37,146 @@ func (_m *MockAdapter) EXPECT() *MockAdapter_Expecter {
 	return &MockAdapter_Expecter{mock: &_m.Mock}
 }
 
+// GetResource provides a mock function for the type MockAdapter
+func (_mock *MockAdapter) GetResource(name string) (*mcp.Resource, server.ResourceHandlerFunc, error) {
+	ret := _mock.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetResource")
+	}
+
+	var r0 *mcp.Resource
+	var r1 server.ResourceHandlerFunc
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(string) (*mcp.Resource, server.ResourceHandlerFunc, error)); ok {
+		return returnFunc(name)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string) *mcp.Resource); ok {
+		r0 = returnFunc(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*mcp.Resource)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string) server.ResourceHandlerFunc); ok {
+		r1 = returnFunc(name)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(server.ResourceHandlerFunc)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(string) error); ok {
+		r2 = returnFunc(name)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockAdapter_GetResource_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResource'
+type MockAdapter_GetResource_Call struct {
+	*mock.Call
+}
+
+// GetResource is a helper method to define mock.On call
+//   - name string
+func (_e *MockAdapter_Expecter) GetResource(name interface{}) *MockAdapter_GetResource_Call {
+	return &MockAdapter_GetResource_Call{Call: _e.mock.On("GetResource", name)}
+}
+
+func (_c *MockAdapter_GetResource_Call) Run(run func(name string)) *MockAdapter_GetResource_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAdapter_GetResource_Call) Return(resource *mcp.Resource, resourceHandlerFunc server.ResourceHandlerFunc, err error) *MockAdapter_GetResource_Call {
+	_c.Call.Return(resource, resourceHandlerFunc, err)
+	return _c
+}
+
+func (_c *MockAdapter_GetResource_Call) RunAndReturn(run func(name string) (*mcp.Resource, server.ResourceHandlerFunc, error)) *MockAdapter_GetResource_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetResourceTemplate provides a mock function for the type MockAdapter
+func (_mock *MockAdapter) GetResourceTemplate(name string) (*mcp.ResourceTemplate, server.ResourceTemplateHandlerFunc, error) {
+	ret := _mock.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetResourceTemplate")
+	}
+
+	var r0 *mcp.ResourceTemplate
+	var r1 server.ResourceTemplateHandlerFunc
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(string) (*mcp.ResourceTemplate, server.ResourceTemplateHandlerFunc, error)); ok {
+		return returnFunc(name)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string) *mcp.ResourceTemplate); ok {
+		r0 = returnFunc(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*mcp.ResourceTemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string) server.ResourceTemplateHandlerFunc); ok {
+		r1 = returnFunc(name)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(server.ResourceTemplateHandlerFunc)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(string) error); ok {
+		r2 = returnFunc(name)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockAdapter_GetResourceTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResourceTemplate'
+type MockAdapter_GetResourceTemplate_Call struct {
+	*mock.Call
+}
+
+// GetResourceTemplate is a helper method to define mock.On call
+//   - name string
+func (_e *MockAdapter_Expecter) GetResourceTemplate(name interface{}) *MockAdapter_GetResourceTemplate_Call {
+	return &MockAdapter_GetResourceTemplate_Call{Call: _e.mock.On("GetResourceTemplate", name)}
+}
+
+func (_c *MockAdapter_GetResourceTemplate_Call) Run(run func(name string)) *MockAdapter_GetResourceTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAdapter_GetResourceTemplate_Call) Return(resourceTemplate *mcp.ResourceTemplate, resourceTemplateHandlerFunc server.ResourceTemplateHandlerFunc, err error) *MockAdapter_GetResourceTemplate_Call {
+	_c.Call.Return(resourceTemplate, resourceTemplateHandlerFunc, err)
+	return _c
+}
+
+func (_c *MockAdapter_GetResourceTemplate_Call) RunAndReturn(run func(name string) (*mcp.ResourceTemplate, server.ResourceTemplateHandlerFunc, error)) *MockAdapter_GetResourceTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetTool provides a mock function for the type MockAdapter
 func (_mock *MockAdapter) GetTool(name string) (*mcp.Tool, server.ToolHandlerFunc, error) {
 	ret := _mock.Called(name)
@@ -103,6 +243,98 @@ func (_c *MockAdapter_GetTool_Call) Return(tool *mcp.Tool, toolHandlerFunc serve
 }
 
 func (_c *MockAdapter_GetTool_Call) RunAndReturn(run func(name string) (*mcp.Tool, server.ToolHandlerFunc, error)) *MockAdapter_GetTool_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResourceTemplateNames provides a mock function for the type MockAdapter
+func (_mock *MockAdapter) ResourceTemplateNames() []string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResourceTemplateNames")
+	}
+
+	var r0 []string
+	if returnFunc, ok := ret.Get(0).(func() []string); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	return r0
+}
+
+// MockAdapter_ResourceTemplateNames_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceTemplateNames'
+type MockAdapter_ResourceTemplateNames_Call struct {
+	*mock.Call
+}
+
+// ResourceTemplateNames is a helper method to define mock.On call
+func (_e *MockAdapter_Expecter) ResourceTemplateNames() *MockAdapter_ResourceTemplateNames_Call {
+	return &MockAdapter_ResourceTemplateNames_Call{Call: _e.mock.On("ResourceTemplateNames")}
+}
+
+func (_c *MockAdapter_ResourceTemplateNames_Call) Run(run func()) *MockAdapter_ResourceTemplateNames_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAdapter_ResourceTemplateNames_Call) Return(strings []string) *MockAdapter_ResourceTemplateNames_Call {
+	_c.Call.Return(strings)
+	return _c
+}
+
+func (_c *MockAdapter_ResourceTemplateNames_Call) RunAndReturn(run func() []string) *MockAdapter_ResourceTemplateNames_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ToolDocResourceNames provides a mock function for the type MockAdapter
+func (_mock *MockAdapter) ToolDocResourceNames() []string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToolDocResourceNames")
+	}
+
+	var r0 []string
+	if returnFunc, ok := ret.Get(0).(func() []string); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	return r0
+}
+
+// MockAdapter_ToolDocResourceNames_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ToolDocResourceNames'
+type MockAdapter_ToolDocResourceNames_Call struct {
+	*mock.Call
+}
+
+// ToolDocResourceNames is a helper method to define mock.On call
+func (_e *MockAdapter_Expecter) ToolDocResourceNames() *MockAdapter_ToolDocResourceNames_Call {
+	return &MockAdapter_ToolDocResourceNames_Call{Call: _e.mock.On("ToolDocResourceNames")}
+}
+
+func (_c *MockAdapter_ToolDocResourceNames_Call) Run(run func()) *MockAdapter_ToolDocResourceNames_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAdapter_ToolDocResourceNames_Call) Return(strings []string) *MockAdapter_ToolDocResourceNames_Call {
+	_c.Call.Return(strings)
+	return _c
+}
+
+func (_c *MockAdapter_ToolDocResourceNames_Call) RunAndReturn(run func() []string) *MockAdapter_ToolDocResourceNames_Call {
 	_c.Call.Return(run)
 	return _c
 }

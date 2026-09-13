@@ -8,6 +8,7 @@ import (
 	cloudfile "github.com/juju/juju/cloud"
 	"github.com/juju/juju/jujuclient"
 
+	"github.com/juju/cmd/v3"
 	"github.com/juju/juju/cmd/juju/action"
 	"github.com/juju/juju/cmd/juju/application"
 	"github.com/juju/juju/cmd/juju/backups"
@@ -22,6 +23,7 @@ import (
 	"github.com/juju/juju/cmd/juju/firewall"
 	"github.com/juju/juju/cmd/juju/machine"
 	"github.com/juju/juju/cmd/juju/model"
+	"github.com/juju/juju/cmd/juju/payload"
 	"github.com/juju/juju/cmd/juju/resource"
 	"github.com/juju/juju/cmd/juju/secretbackends"
 	"github.com/juju/juju/cmd/juju/secrets"
@@ -32,7 +34,6 @@ import (
 	"github.com/juju/juju/cmd/juju/subnet"
 	"github.com/juju/juju/cmd/juju/user"
 	"github.com/juju/juju/cmd/juju/waitfor"
-	"github.com/juju/cmd/v3"
 )
 
 // ResourceTemplateConfig defines how to handle a resource template
@@ -92,7 +93,7 @@ func (c *commandFactory) GetCommand(id JujuCommandID) (Command, error) {
 
 func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error) {
 	cloudAdapter := &cloudToCommandAdaptor{}
-	
+
 	switch id {
 	// Reporting commands
 	case CmdStatus:
@@ -125,6 +126,8 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return application.NewShowApplicationCommand(), nil
 	case CmdShowUnit:
 		return application.NewShowUnitCommand(), nil
+	case CmdSetApplicationBase:
+		return application.NewSetApplicationBaseCommand(), nil
 	case CmdRefresh:
 		return application.NewRefreshCommand(), nil
 	case CmdBind:
@@ -169,6 +172,10 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return model.NewConfigCommand(), nil
 	case CmdModelDefaults:
 		return model.NewDefaultsCommand(), nil
+	case CmdModelConstraints:
+		return model.NewModelGetConstraintsCommand(), nil
+	case CmdSetModelConstraints:
+		return model.NewModelSetConstraintsCommand(), nil
 	case CmdRetryProvisioning:
 		return model.NewRetryProvisioningCommand(), nil
 	case CmdDestroyModel:
@@ -190,7 +197,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 
 	// Commands from main commands package
 	case CmdBootstrap, CmdMigrate, CmdSyncAgentBinary, CmdUpgradeModel, CmdUpgradeController,
-		 CmdHelpHooks, CmdHelpActions, CmdDebugLog, CmdEnableHa:
+		CmdHelpHooks, CmdHelpActions, CmdDebugLog, CmdEnableHa:
 		return commands.NewCommandByName(string(id))
 
 	// Controller commands
@@ -283,7 +290,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 	case CmdLogout:
 		return user.NewLogoutCommand(), nil
 	case CmdRemoveUser:
-		return user.NewRemoveCommand(), nil  
+		return user.NewRemoveCommand(), nil
 	case CmdWhoami:
 		return user.NewWhoAmICommand(), nil
 
@@ -402,6 +409,10 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return resource.NewListCommand(), nil
 	case CmdCharmResources:
 		return resource.NewCharmResourcesCommand(), nil
+
+	// Payload commands
+	case CmdPayloads:
+		return payload.NewListCommand(), nil
 
 	// CharmHub commands
 	case CmdInfo:

@@ -10,13 +10,13 @@ This MCP server exposes Juju functionality through MCP tools, allowing AI assist
 
 ## Features
 
-This MCP server supports most of the features that the Juju CLI provides (100+ commands available).
+This MCP server supports most of the features that the Juju CLI provides (161 commands available).
 
 ## Quick Start
 
 ### Prerequisites
 
-- Go 1.24 or later
+- Go 1.26 or later
 - Juju CLI installed and configured
 
 ### Installation
@@ -58,21 +58,26 @@ sudo snap start mcp-juju.mcp-juju-daemon
 ### Running
 
 ```bash
-# Run the MCP server
+# Run the MCP server over stdio (default)
 make run
 
-# Or run with custom options
-./mcp-juju --port 8080 --debug
+# Run the Streamable HTTP server
+./mcp-juju --server-type http --port 8080
+
+# Expose only a subset of commands, with debug logging on stderr
+./mcp-juju --tool-names status,deploy,config --debug
 ```
 
-The server will start on `http://localhost:8080/mcp` by default.
+In HTTP mode the server listens on `http://localhost:8080/mcp` by default.
 
 ### Configuration
 
 Environment variables (prefixed with `MCP_JUJU_`):
-- `MCP_JUJU_PORT`: Server port (default: 8080)
-- `MCP_JUJU_DEBUG`: Enable debug mode (default: false)
-- `MCP_JUJU_ENDPOINT`: Endpoint path (default: /mcp)
+- `MCP_JUJU_PORT`: Server port for HTTP mode (default: 8080)
+- `MCP_JUJU_DEBUG`: Enable debug logging (default: false)
+- `MCP_JUJU_ENDPOINT`: Endpoint path for HTTP mode (default: /mcp)
+- `MCP_JUJU_SERVER_TYPE`: `stdio` (default) or `http`
+- `MCP_JUJU_TOOL_NAMES`: Comma-separated list of command IDs to expose (default: all)
 
 ## Usage
 
@@ -84,7 +89,7 @@ Once running, the MCP server provides tools for all Juju CLI operations:
 - `add-unit`: Scale applications
 - `config`: Configure applications
 - `bootstrap`: Initialize a cloud environment
-- `add-relation`: Create relations between applications
+- `integrate`: Create relations between applications
 - And all other Juju CLI commands
 
 ## Development

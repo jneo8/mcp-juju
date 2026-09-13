@@ -21,10 +21,10 @@ func parseURIParameters(uri string, config ResourceTemplateConfig) (map[string]s
 		if err != nil {
 			return nil, fmt.Errorf("invalid argument index '%s' for parameter '%s'", argIndexStr, paramName)
 		}
-		
+
 		// Adjust index to account for the base path (e.g., "config" is index 0)
 		uriIndex := argIndex + 1 // +1 because index 0 is "config"
-		
+
 		if uriIndex < len(parts) && parts[uriIndex] != "" {
 			params[paramName] = parts[uriIndex]
 		}
