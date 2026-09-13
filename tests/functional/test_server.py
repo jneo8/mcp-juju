@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import contextlib
 import json
+import pathlib
+import subprocess
 
+import httpx2
 import jubilant
 import pytest
 from mcp.types import TextContent, TextResourceContents
 
-from mcpclient import McpJujuClient, result_text
+from mcpclient import HttpServer, McpJujuClient, result_text
 
 APP = 'mcp-app'
 DEPLOY_TIMEOUT = 20 * 60
@@ -152,6 +155,60 @@ def test_unknown_application_is_tool_error(juju: jubilant.Juju, mcp: McpJujuClie
     result = mcp.call_tool('show-application', {'model': juju.model, 'args': ['no-such-app']})
     assert result.is_error
     assert 'no-such-app' in result_text(result)
+
+
+# --- Streamable HTTP transport -----------------------------------------------
+
+
+def test_http_requires_bearer_token(mcp_http_server: HttpServer):
+    initialize = {
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'initialize',
+        'params': {
+            'protocolVersion': '2025-06-18',
+            'capabilities': {},
+            'clientInfo': {'name': 'test', 'version': '0'},
+        },
+    }
+    headers = {'Accept': 'application/json, text/event-stream'}
+    with httpx2.Client(headers=headers) as http:
+        missing = http.post(mcp_http_server.url, json=initialize)
+        assert missing.status_code == 401
+        assert 'Bearer' in missing.headers.get('WWW-Authenticate', '')
+
+        wrong = http.post(
+            mcp_http_server.url, json=initialize, headers={'Authorization': 'Bearer nope'}
+        )
+        assert wrong.status_code == 401
+
+        ok = http.post(
+            mcp_http_server.url,
+            json=initialize,
+            headers={'Authorization': f'Bearer {mcp_http_server.token}'},
+        )
+        assert ok.status_code == 200, ok.text
+
+
+def test_http_matches_stdio(juju: jubilant.Juju, mcp: McpJujuClient, mcp_http: McpJujuClient):
+    assert {t.name for t in mcp_http.list_tools()} == {t.name for t in mcp.list_tools()}
+
+    result = mcp_http.call_tool('status', {'model': juju.model})
+    assert not result.is_error, result_text(result)
+    assert result.structured_content is not None
+    assert result.structured_content['model']['name'] == juju.model
+    assert set(result.structured_content['applications']) == {APP}
+
+
+def test_http_refuses_non_loopback_without_token(mcp_juju_binary: pathlib.Path):
+    proc = subprocess.run(
+        [str(mcp_juju_binary), '--server-type', 'http', '--host', '0.0.0.0', '--port', '0'],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert proc.returncode != 0
+    assert 'auth-token' in proc.stderr + proc.stdout
 
 
 # --- Mutating tools --------------------------------------------------------

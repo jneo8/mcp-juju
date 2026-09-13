@@ -57,4 +57,7 @@ mocks:
 # Run functional tests against a bootstrapped Juju controller (needs uv), e.g. just test-functional -k test_status
 [positional-arguments]
 test-functional *ARGS:
+    @echo "Tip: watch the temporary models from another terminal with:"
+    @echo "  watch -c \"juju models | grep jubilant | awk '{print \\\$1}' | tr -d '*' | xargs -I {} juju status --color -m {}\""
+    @echo
     uv run --project tests/functional --group functional pytest tests/functional "$@"
