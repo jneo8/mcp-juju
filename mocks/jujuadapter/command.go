@@ -180,57 +180,6 @@ func (_c *MockCommand_Name_Call) RunAndReturn(run func() string) *MockCommand_Na
 	return _c
 }
 
-// Run provides a mock function for the type MockCommand
-func (_mock *MockCommand) Run(context1 context.Context) error {
-	ret := _mock.Called(context1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Run")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = returnFunc(context1)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockCommand_Run_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Run'
-type MockCommand_Run_Call struct {
-	*mock.Call
-}
-
-// Run is a helper method to define mock.On call
-//   - context1 context.Context
-func (_e *MockCommand_Expecter) Run(context1 interface{}) *MockCommand_Run_Call {
-	return &MockCommand_Run_Call{Call: _e.mock.On("Run", context1)}
-}
-
-func (_c *MockCommand_Run_Call) Run(run func(context1 context.Context)) *MockCommand_Run_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockCommand_Run_Call) Return(err error) *MockCommand_Run_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockCommand_Run_Call) RunAndReturn(run func(context1 context.Context) error) *MockCommand_Run_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RunWithOutput provides a mock function for the type MockCommand
 func (_mock *MockCommand) RunWithOutput(context1 context.Context) (string, string, error) {
 	ret := _mock.Called(context1)
