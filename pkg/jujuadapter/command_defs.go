@@ -1,18 +1,26 @@
 package jujuadapter
 
 // JujuCommandID represents a unique command identifier
+//
+// TODO: the following Juju CLI commands are not exposed because their
+// constructors are unexported in github.com/juju/juju/cmd/juju/commands and
+// the project no longer carries a fork to reach them:
+//
+//	version, bootstrap, switch, migrate, sync-agent-binary, upgrade-model,
+//	upgrade-controller, help-hook-commands, help-action-commands, debug-log,
+//	enable-ha.
+//
+// Revisit if upstream exports them (or a NewCommandByName helper), or if a
+// maintained fork becomes acceptable again.
 type JujuCommandID string
 
 // Define all command IDs as constants
 const (
 	// Reporting commands
-	CmdVersion       JujuCommandID = "version"
 	CmdStatus        JujuCommandID = "status"
 	CmdShowStatusLog JujuCommandID = "show-status-log"
-	CmdSwitch        JujuCommandID = "switch"
 
 	// Creation commands
-	CmdBootstrap JujuCommandID = "bootstrap"
 	CmdIntegrate JujuCommandID = "integrate"
 
 	// Cross model relations commands
@@ -40,22 +48,16 @@ const (
 	CmdScp        JujuCommandID = "scp"
 	CmdSsh        JujuCommandID = "ssh"
 	CmdResolved   JujuCommandID = "resolved"
-	CmdDebugLog   JujuCommandID = "debug-log"
 	CmdDebugHooks JujuCommandID = "debug-hooks"
 	CmdDebugCode  JujuCommandID = "debug-code"
 
 	// Configuration commands
-	CmdConstraints       JujuCommandID = "constraints"
-	CmdSetConstraints    JujuCommandID = "set-constraints"
-	CmdSyncAgentBinary   JujuCommandID = "sync-agent-binary"
-	CmdUpgradeModel      JujuCommandID = "upgrade-model"
-	CmdUpgradeController JujuCommandID = "upgrade-controller"
-	CmdRefresh           JujuCommandID = "refresh"
-	CmdBind              JujuCommandID = "bind"
+	CmdConstraints    JujuCommandID = "constraints"
+	CmdSetConstraints JujuCommandID = "set-constraints"
+	CmdRefresh        JujuCommandID = "refresh"
+	CmdBind           JujuCommandID = "bind"
 
 	// Charm tool commands
-	CmdHelpHookCommands   JujuCommandID = "help-hook-commands"
-	CmdHelpActionCommands JujuCommandID = "help-action-commands"
 
 	// Manage backups
 	CmdCreateBackup   JujuCommandID = "create-backup"
@@ -97,7 +99,6 @@ const (
 	CmdRevoke              JujuCommandID = "revoke"
 	CmdShowModel           JujuCommandID = "show-model"
 	CmdSetCredential       JujuCommandID = "set-credential"
-	CmdMigrate             JujuCommandID = "migrate"
 	CmdExportBundle        JujuCommandID = "export-bundle"
 
 	// Manage and control actions
@@ -110,7 +111,6 @@ const (
 	CmdShowTask      JujuCommandID = "show-task"
 
 	// Manage controller availability
-	CmdEnableHa JujuCommandID = "enable-ha"
 
 	// Manage and control applications
 	CmdAddUnit            JujuCommandID = "add-unit"
@@ -122,6 +122,7 @@ const (
 	CmdShowApplication    JujuCommandID = "show-application"
 	CmdShowUnit           JujuCommandID = "show-unit"
 	CmdSetApplicationBase JujuCommandID = "set-application-base"
+	CmdApplicationStorage JujuCommandID = "application-storage"
 
 	// Operation protection commands
 	CmdDisableCommand   JujuCommandID = "disable-command"
@@ -233,10 +234,8 @@ const (
 func GetAllCommandIDs() []JujuCommandID {
 	return []JujuCommandID{
 		// From registerCommands in exact order as juju/cmd/juju/commands/main.go
-		CmdVersion,
 
 		// Creation commands.
-		CmdBootstrap,
 		CmdIntegrate,
 
 		// Cross model relations commands.
@@ -261,7 +260,6 @@ func GetAllCommandIDs() []JujuCommandID {
 
 		// Reporting commands.
 		CmdStatus,
-		CmdSwitch,
 		CmdShowStatusLog,
 
 		// Error resolution and debugging commands.
@@ -269,22 +267,16 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdScp,
 		CmdSsh,
 		CmdResolved,
-		CmdDebugLog,
 		CmdDebugHooks,
 		CmdDebugCode,
 
 		// Configuration commands.
 		CmdConstraints,
 		CmdSetConstraints,
-		CmdSyncAgentBinary,
-		CmdUpgradeModel,
-		CmdUpgradeController,
 		CmdRefresh,
 		CmdBind,
 
 		// Charm tool commands.
-		CmdHelpHookCommands,
-		CmdHelpActionCommands,
 
 		// Manage backups.
 		CmdCreateBackup,
@@ -327,7 +319,6 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdShowModel,
 		CmdSetCredential,
 
-		CmdMigrate,
 		CmdExportBundle,
 
 		// Manage and control actions
@@ -340,7 +331,6 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdShowTask,
 
 		// Manage controller availability
-		CmdEnableHa,
 
 		// Manage and control applications
 		CmdAddUnit,
@@ -352,6 +342,7 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdShowApplication,
 		CmdShowUnit,
 		CmdSetApplicationBase,
+		CmdApplicationStorage,
 
 		// Operation protection commands
 		CmdDisableCommand,
