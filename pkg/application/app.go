@@ -22,8 +22,12 @@ func NewApplication(cfg config.Config, adapter jujuadapter.Adapter) (Application
 		mcpServer: server.NewMCPServer(
 			config.MCPServerName,
 			config.Version,
-			server.WithResourceCapabilities(true, false),
-			server.WithLogging(),
+			// Tool and resource capabilities are registered implicitly when
+			// the first tool or resource is added. Subscriptions and the
+			// logging capability are intentionally not advertised: neither
+			// is implemented, and both are deprecated or removed in the
+			// 2026-07-28 MCP specification.
+			server.WithInstructions(serverInstructions),
 		),
 		config:  cfg,
 		adapter: adapter,

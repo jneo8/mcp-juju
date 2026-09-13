@@ -98,7 +98,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 	// Reporting commands
 	case CmdStatus:
 		return status.NewStatusCommand(), nil
-	case CmdStatusHistory:
+	case CmdShowStatusLog:
 		return status.NewStatusHistoryCommand(), nil
 	case CmdSwitch:
 		return commands.NewCommandByName(string(id))
@@ -116,7 +116,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return application.NewExposeCommand(), nil
 	case CmdUnexpose:
 		return application.NewUnexposeCommand(), nil
-	case CmdGetConstraints:
+	case CmdConstraints:
 		return application.NewApplicationGetConstraintsCommand(), nil
 	case CmdSetConstraints:
 		return application.NewApplicationSetConstraintsCommand(), nil
@@ -136,7 +136,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return application.NewScaleApplicationCommand(), nil
 	case CmdTrust:
 		return application.NewTrustCommand(), nil
-	case CmdAddRelation:
+	case CmdIntegrate:
 		return application.NewAddRelationCommand(), nil
 	case CmdRemoveRelation:
 		return application.NewRemoveRelationCommand(), nil
@@ -186,7 +186,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return model.NewRevokeCommand(), nil
 	case CmdShowModel:
 		return model.NewShowCommand(), nil
-	case CmdModelCredential:
+	case CmdSetCredential:
 		return model.NewModelCredentialCommand(), nil
 	case CmdExportBundle:
 		return model.NewExportBundleCommand(), nil
@@ -197,8 +197,13 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 
 	// Commands from main commands package
 	case CmdBootstrap, CmdMigrate, CmdSyncAgentBinary, CmdUpgradeModel, CmdUpgradeController,
-		CmdHelpHooks, CmdHelpActions, CmdDebugLog, CmdEnableHa:
+		CmdDebugLog, CmdEnableHa:
 		return commands.NewCommandByName(string(id))
+	// The fork's NewCommandByName keys these two by their legacy names.
+	case CmdHelpHookCommands:
+		return commands.NewCommandByName("help-hooks")
+	case CmdHelpActionCommands:
+		return commands.NewCommandByName("help-actions")
 
 	// Controller commands
 	case CmdAddModel:
@@ -227,7 +232,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return action.NewListCommand(), nil
 	case CmdShowAction:
 		return action.NewShowCommand(), nil
-	case CmdCancelAction:
+	case CmdCancelTask:
 		return action.NewCancelCommand(), nil
 	case CmdRun:
 		return action.NewRunCommand(), nil
@@ -257,11 +262,11 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return cloud.NewRemoveCloudCommand(), nil
 	case CmdCredentials:
 		return cloud.NewListCredentialsCommand(), nil
-	case CmdDetectCredentials:
+	case CmdAutoloadCredentials:
 		return cloud.NewDetectCredentialsCommand(), nil
-	case CmdSetDefaultRegion:
+	case CmdDefaultRegion:
 		return cloud.NewSetDefaultRegionCommand(), nil
-	case CmdSetDefaultCredential:
+	case CmdDefaultCredential:
 		return cloud.NewSetDefaultCredentialCommand(), nil
 	case CmdAddCredential:
 		return cloud.NewAddCredentialCommand(), nil
@@ -275,7 +280,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 	// User commands
 	case CmdAddUser:
 		return user.NewAddCommand(), nil
-	case CmdChangePassword:
+	case CmdChangeUserPassword:
 		return user.NewChangePasswordCommand(), nil
 	case CmdShowUser:
 		return user.NewShowUserCommand(), nil
@@ -375,7 +380,7 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 	// Firewall commands
 	case CmdSetFirewallRule:
 		return firewall.NewSetFirewallRuleCommand(), nil
-	case CmdListFirewallRules:
+	case CmdFirewallRules:
 		return firewall.NewListFirewallRulesCommand(), nil
 
 	// Cross model commands
@@ -383,11 +388,11 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return crossmodel.NewOfferCommand(), nil
 	case CmdRemoveOffer:
 		return crossmodel.NewRemoveOfferCommand(), nil
-	case CmdShowOfferedEndpoint:
+	case CmdShowOffer:
 		return crossmodel.NewShowOfferedEndpointCommand(), nil
-	case CmdListEndpoints:
+	case CmdOffers:
 		return crossmodel.NewListEndpointsCommand(), nil
-	case CmdFindEndpoints:
+	case CmdFindOffers:
 		return crossmodel.NewFindEndpointsCommand(), nil
 
 	// CAAS commands

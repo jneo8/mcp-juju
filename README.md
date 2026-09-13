@@ -81,7 +81,16 @@ Environment variables (prefixed with `MCP_JUJU_`):
 
 ## Usage
 
-Once running, the MCP server provides tools for all Juju CLI operations:
+Once running, the MCP server provides tools for all Juju CLI operations. Each tool shares the name of its Juju command and follows the same conventions:
+
+- Positional arguments go in the `args` array; every other property is a long flag name.
+- Commands with `--format` default to `json`, and the parsed object is also returned as MCP `structuredContent`.
+- Tools carry MCP annotations (read-only, destructive, idempotent, open-world) so clients can ask for confirmation before destructive commands.
+- Failed commands return an `isError` result containing the Juju error text.
+- Commands never read stdin, so confirmation prompts must be skipped with flags such as `no-prompt`.
+- The full help text of each command is available as the resource `juju://<tool>-doc`.
+
+Examples:
 
 - `add-model`: Add a new model
 - `status`: Get Juju status

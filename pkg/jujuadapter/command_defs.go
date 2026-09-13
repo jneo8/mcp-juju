@@ -8,26 +8,26 @@ const (
 	// Reporting commands
 	CmdVersion       JujuCommandID = "version"
 	CmdStatus        JujuCommandID = "status"
-	CmdStatusHistory JujuCommandID = "status-history"
+	CmdShowStatusLog JujuCommandID = "show-status-log"
 	CmdSwitch        JujuCommandID = "switch"
 
 	// Creation commands
-	CmdBootstrap   JujuCommandID = "bootstrap"
-	CmdAddRelation JujuCommandID = "add-relation"
+	CmdBootstrap JujuCommandID = "bootstrap"
+	CmdIntegrate JujuCommandID = "integrate"
 
 	// Cross model relations commands
-	CmdOffer               JujuCommandID = "offer"
-	CmdRemoveOffer         JujuCommandID = "remove-offer"
-	CmdShowOfferedEndpoint JujuCommandID = "show-offered-endpoint"
-	CmdListEndpoints       JujuCommandID = "list-endpoints"
-	CmdFindEndpoints       JujuCommandID = "find-endpoints"
-	CmdConsume             JujuCommandID = "consume"
-	CmdSuspendRelation     JujuCommandID = "suspend-relation"
-	CmdResumeRelation      JujuCommandID = "resume-relation"
+	CmdOffer           JujuCommandID = "offer"
+	CmdRemoveOffer     JujuCommandID = "remove-offer"
+	CmdShowOffer       JujuCommandID = "show-offer"
+	CmdOffers          JujuCommandID = "offers"
+	CmdFindOffers      JujuCommandID = "find-offers"
+	CmdConsume         JujuCommandID = "consume"
+	CmdSuspendRelation JujuCommandID = "suspend-relation"
+	CmdResumeRelation  JujuCommandID = "resume-relation"
 
 	// Firewall rule commands
-	CmdSetFirewallRule   JujuCommandID = "set-firewall-rule"
-	CmdListFirewallRules JujuCommandID = "list-firewall-rules"
+	CmdSetFirewallRule JujuCommandID = "set-firewall-rule"
+	CmdFirewallRules   JujuCommandID = "firewall-rules"
 
 	// Destruction commands
 	CmdRemoveRelation    JujuCommandID = "remove-relation"
@@ -45,7 +45,7 @@ const (
 	CmdDebugCode  JujuCommandID = "debug-code"
 
 	// Configuration commands
-	CmdGetConstraints    JujuCommandID = "get-constraints"
+	CmdConstraints       JujuCommandID = "constraints"
 	CmdSetConstraints    JujuCommandID = "set-constraints"
 	CmdSyncAgentBinary   JujuCommandID = "sync-agent-binary"
 	CmdUpgradeModel      JujuCommandID = "upgrade-model"
@@ -54,8 +54,8 @@ const (
 	CmdBind              JujuCommandID = "bind"
 
 	// Charm tool commands
-	CmdHelpHooks   JujuCommandID = "help-hooks"
-	CmdHelpActions JujuCommandID = "help-actions"
+	CmdHelpHookCommands   JujuCommandID = "help-hook-commands"
+	CmdHelpActionCommands JujuCommandID = "help-action-commands"
 
 	// Manage backups
 	CmdCreateBackup   JujuCommandID = "create-backup"
@@ -68,16 +68,16 @@ const (
 	CmdSshKeys      JujuCommandID = "ssh-keys"
 
 	// Manage users and access
-	CmdAddUser        JujuCommandID = "add-user"
-	CmdChangePassword JujuCommandID = "change-password"
-	CmdShowUser       JujuCommandID = "show-user"
-	CmdUsers          JujuCommandID = "users"
-	CmdEnableUser     JujuCommandID = "enable-user"
-	CmdDisableUser    JujuCommandID = "disable-user"
-	CmdLogin          JujuCommandID = "login"
-	CmdLogout         JujuCommandID = "logout"
-	CmdRemoveUser     JujuCommandID = "remove-user"
-	CmdWhoami         JujuCommandID = "whoami"
+	CmdAddUser            JujuCommandID = "add-user"
+	CmdChangeUserPassword JujuCommandID = "change-user-password"
+	CmdShowUser           JujuCommandID = "show-user"
+	CmdUsers              JujuCommandID = "users"
+	CmdEnableUser         JujuCommandID = "enable-user"
+	CmdDisableUser        JujuCommandID = "disable-user"
+	CmdLogin              JujuCommandID = "login"
+	CmdLogout             JujuCommandID = "logout"
+	CmdRemoveUser         JujuCommandID = "remove-user"
+	CmdWhoami             JujuCommandID = "whoami"
 
 	// Manage machines
 	CmdAddMachine     JujuCommandID = "add-machine"
@@ -96,14 +96,14 @@ const (
 	CmdGrant               JujuCommandID = "grant"
 	CmdRevoke              JujuCommandID = "revoke"
 	CmdShowModel           JujuCommandID = "show-model"
-	CmdModelCredential     JujuCommandID = "model-credential"
+	CmdSetCredential       JujuCommandID = "set-credential"
 	CmdMigrate             JujuCommandID = "migrate"
 	CmdExportBundle        JujuCommandID = "export-bundle"
 
 	// Manage and control actions
 	CmdActions       JujuCommandID = "actions"
 	CmdShowAction    JujuCommandID = "show-action"
-	CmdCancelAction  JujuCommandID = "cancel-action"
+	CmdCancelTask    JujuCommandID = "cancel-task"
 	CmdRun           JujuCommandID = "run"
 	CmdOperations    JujuCommandID = "operations"
 	CmdShowOperation JujuCommandID = "show-operation"
@@ -166,23 +166,23 @@ const (
 	CmdControllerConfig        JujuCommandID = "controller-config"
 
 	// Manage clouds and credentials
-	CmdUpdateCloud          JujuCommandID = "update-cloud"
-	CmdUpdatePublicClouds   JujuCommandID = "update-public-clouds"
-	CmdClouds               JujuCommandID = "clouds"
-	CmdRegions              JujuCommandID = "regions"
-	CmdShowCloud            JujuCommandID = "show-cloud"
-	CmdAddCloud             JujuCommandID = "add-cloud"
-	CmdRemoveCloud          JujuCommandID = "remove-cloud"
-	CmdCredentials          JujuCommandID = "credentials"
-	CmdDetectCredentials    JujuCommandID = "detect-credentials"
-	CmdSetDefaultRegion     JujuCommandID = "set-default-region"
-	CmdSetDefaultCredential JujuCommandID = "set-default-credential"
-	CmdAddCredential        JujuCommandID = "add-credential"
-	CmdRemoveCredential     JujuCommandID = "remove-credential"
-	CmdUpdateCredential     JujuCommandID = "update-credential"
-	CmdShowCredential       JujuCommandID = "show-credential"
-	CmdGrantCloud           JujuCommandID = "grant-cloud"
-	CmdRevokeCloud          JujuCommandID = "revoke-cloud"
+	CmdUpdateCloud         JujuCommandID = "update-cloud"
+	CmdUpdatePublicClouds  JujuCommandID = "update-public-clouds"
+	CmdClouds              JujuCommandID = "clouds"
+	CmdRegions             JujuCommandID = "regions"
+	CmdShowCloud           JujuCommandID = "show-cloud"
+	CmdAddCloud            JujuCommandID = "add-cloud"
+	CmdRemoveCloud         JujuCommandID = "remove-cloud"
+	CmdCredentials         JujuCommandID = "credentials"
+	CmdAutoloadCredentials JujuCommandID = "autoload-credentials"
+	CmdDefaultRegion       JujuCommandID = "default-region"
+	CmdDefaultCredential   JujuCommandID = "default-credential"
+	CmdAddCredential       JujuCommandID = "add-credential"
+	CmdRemoveCredential    JujuCommandID = "remove-credential"
+	CmdUpdateCredential    JujuCommandID = "update-credential"
+	CmdShowCredential      JujuCommandID = "show-credential"
+	CmdGrantCloud          JujuCommandID = "grant-cloud"
+	CmdRevokeCloud         JujuCommandID = "revoke-cloud"
 
 	// CAAS commands
 	CmdAddK8s           JujuCommandID = "add-k8s"
@@ -237,21 +237,21 @@ func GetAllCommandIDs() []JujuCommandID {
 
 		// Creation commands.
 		CmdBootstrap,
-		CmdAddRelation,
+		CmdIntegrate,
 
 		// Cross model relations commands.
 		CmdOffer,
 		CmdRemoveOffer,
-		CmdShowOfferedEndpoint,
-		CmdListEndpoints,
-		CmdFindEndpoints,
+		CmdShowOffer,
+		CmdOffers,
+		CmdFindOffers,
 		CmdConsume,
 		CmdSuspendRelation,
 		CmdResumeRelation,
 
 		// Firewall rule commands.
 		CmdSetFirewallRule,
-		CmdListFirewallRules,
+		CmdFirewallRules,
 
 		// Destruction commands.
 		CmdRemoveRelation,
@@ -262,7 +262,7 @@ func GetAllCommandIDs() []JujuCommandID {
 		// Reporting commands.
 		CmdStatus,
 		CmdSwitch,
-		CmdStatusHistory,
+		CmdShowStatusLog,
 
 		// Error resolution and debugging commands.
 		CmdExec,
@@ -274,7 +274,7 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdDebugCode,
 
 		// Configuration commands.
-		CmdGetConstraints,
+		CmdConstraints,
 		CmdSetConstraints,
 		CmdSyncAgentBinary,
 		CmdUpgradeModel,
@@ -283,8 +283,8 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdBind,
 
 		// Charm tool commands.
-		CmdHelpHooks,
-		CmdHelpActions,
+		CmdHelpHookCommands,
+		CmdHelpActionCommands,
 
 		// Manage backups.
 		CmdCreateBackup,
@@ -298,7 +298,7 @@ func GetAllCommandIDs() []JujuCommandID {
 
 		// Manage users and access
 		CmdAddUser,
-		CmdChangePassword,
+		CmdChangeUserPassword,
 		CmdShowUser,
 		CmdUsers,
 		CmdEnableUser,
@@ -325,7 +325,7 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdGrant,
 		CmdRevoke,
 		CmdShowModel,
-		CmdModelCredential,
+		CmdSetCredential,
 
 		CmdMigrate,
 		CmdExportBundle,
@@ -333,7 +333,7 @@ func GetAllCommandIDs() []JujuCommandID {
 		// Manage and control actions
 		CmdActions,
 		CmdShowAction,
-		CmdCancelAction,
+		CmdCancelTask,
 		CmdRun,
 		CmdOperations,
 		CmdShowOperation,
@@ -404,9 +404,9 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdAddCloud,
 		CmdRemoveCloud,
 		CmdCredentials,
-		CmdDetectCredentials,
-		CmdSetDefaultRegion,
-		CmdSetDefaultCredential,
+		CmdAutoloadCredentials,
+		CmdDefaultRegion,
+		CmdDefaultCredential,
 		CmdAddCredential,
 		CmdRemoveCredential,
 		CmdUpdateCredential,
