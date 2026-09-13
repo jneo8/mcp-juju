@@ -39,6 +39,7 @@ func TestPersistentPreRun(t *testing.T) {
 		}
 		testCmd.Flags().String("port", "8080", "Port to server on")
 		testCmd.Flags().Bool("debug", false, "Enable debug mode")
+		testCmd.Flags().String("server-type", "stdio", "Server type (http or stdio)")
 
 		// Reset viper for test isolation
 		viper.Reset()
@@ -66,6 +67,7 @@ func TestPersistentPreRun(t *testing.T) {
 		}
 		testCmd.Flags().String("port", "8080", "Port to server on")
 		testCmd.Flags().Bool("debug", false, "Enable debug mode")
+		testCmd.Flags().String("server-type", "stdio", "Server type (http or stdio)")
 
 		// Reset viper for test isolation
 		viper.Reset()
@@ -79,18 +81,18 @@ func TestPersistentPreRun(t *testing.T) {
 		assert.Equal(t, "true", viper.GetString("debug"))
 	})
 
-	t.Run("should return error when flag binding fails", func(t *testing.T) {
-		// Create a command without flags to trigger binding error
+	t.Run("should return error when server type is invalid", func(t *testing.T) {
 		testCmd := &cobra.Command{
 			Use: "test",
 		}
+		testCmd.Flags().String("server-type", "grpc", "Server type (http or stdio)")
 
 		// Reset viper for test isolation
 		viper.Reset()
 
-		// This should not fail since BindPFlags with no flags is valid
 		err := persistentPreRun(testCmd, []string{})
-		assert.NoError(t, err)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid server type")
 	})
 }
 

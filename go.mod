@@ -1,18 +1,16 @@
 module github.com/jneo8/mcp-juju
 
-go 1.24.4
-
-toolchain go1.24.5
+go 1.26
 
 require (
 	github.com/juju/cmd/v3 v3.2.0
 	github.com/juju/gnuflag v1.0.0
 	github.com/juju/juju v0.0.0-20250724081713-f948b83392f7
-	github.com/mark3labs/mcp-go v0.34.0
+	github.com/mark3labs/mcp-go v1.0.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 )
 
 replace github.com/juju/juju => github.com/jneo8/juju v0.0.0-20250727075958-4c71e6ce6e46
@@ -69,6 +67,7 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
@@ -171,6 +170,7 @@ require (
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect

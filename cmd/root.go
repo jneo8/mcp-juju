@@ -7,6 +7,8 @@ import (
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/jneo8/mcp-juju/pkg/application"
 	"github.com/jneo8/mcp-juju/pkg/jujuadapter"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -56,7 +58,19 @@ func persistentPreRun(cmd *cobra.Command, args []string) error {
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("config validation failed: %w", err)
 	}
+	configureLogging(cfg)
 	return nil
+}
+
+// configureLogging sets the global log level from the config. Logs always go
+// to stderr, so they never interfere with the MCP stdio transport on stdout.
+func configureLogging(cfg config.Config) {
+	level := zerolog.InfoLevel
+	if cfg.Debug {
+		level = zerolog.DebugLevel
+	}
+	zerolog.SetGlobalLevel(level)
+	log.Logger = log.Output(os.Stderr)
 }
 
 func Execute() {

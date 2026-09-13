@@ -3,7 +3,6 @@ package jujuadapter
 // JujuCommandID represents a unique command identifier
 type JujuCommandID string
 
-
 // Define all command IDs as constants
 const (
 	// Reporting commands
@@ -88,16 +87,18 @@ const (
 	CmdUpgradeMachine JujuCommandID = "upgrade-machine"
 
 	// Manage model
-	CmdModelConfig       JujuCommandID = "model-config"
-	CmdModelDefaults     JujuCommandID = "model-defaults"
-	CmdRetryProvisioning JujuCommandID = "retry-provisioning"
-	CmdDestroyModel      JujuCommandID = "destroy-model"
-	CmdGrant             JujuCommandID = "grant"
-	CmdRevoke            JujuCommandID = "revoke"
-	CmdShowModel         JujuCommandID = "show-model"
-	CmdModelCredential   JujuCommandID = "model-credential"
-	CmdMigrate           JujuCommandID = "migrate"
-	CmdExportBundle      JujuCommandID = "export-bundle"
+	CmdModelConfig         JujuCommandID = "model-config"
+	CmdModelDefaults       JujuCommandID = "model-defaults"
+	CmdModelConstraints    JujuCommandID = "model-constraints"
+	CmdSetModelConstraints JujuCommandID = "set-model-constraints"
+	CmdRetryProvisioning   JujuCommandID = "retry-provisioning"
+	CmdDestroyModel        JujuCommandID = "destroy-model"
+	CmdGrant               JujuCommandID = "grant"
+	CmdRevoke              JujuCommandID = "revoke"
+	CmdShowModel           JujuCommandID = "show-model"
+	CmdModelCredential     JujuCommandID = "model-credential"
+	CmdMigrate             JujuCommandID = "migrate"
+	CmdExportBundle        JujuCommandID = "export-bundle"
 
 	// Manage and control actions
 	CmdActions       JujuCommandID = "actions"
@@ -112,14 +113,15 @@ const (
 	CmdEnableHa JujuCommandID = "enable-ha"
 
 	// Manage and control applications
-	CmdAddUnit         JujuCommandID = "add-unit"
-	CmdConfig          JujuCommandID = "config"
-	CmdDeploy          JujuCommandID = "deploy"
-	CmdExpose          JujuCommandID = "expose"
-	CmdUnexpose        JujuCommandID = "unexpose"
-	CmdDiffBundle      JujuCommandID = "diff-bundle"
-	CmdShowApplication JujuCommandID = "show-application"
-	CmdShowUnit        JujuCommandID = "show-unit"
+	CmdAddUnit            JujuCommandID = "add-unit"
+	CmdConfig             JujuCommandID = "config"
+	CmdDeploy             JujuCommandID = "deploy"
+	CmdExpose             JujuCommandID = "expose"
+	CmdUnexpose           JujuCommandID = "unexpose"
+	CmdDiffBundle         JujuCommandID = "diff-bundle"
+	CmdShowApplication    JujuCommandID = "show-application"
+	CmdShowUnit           JujuCommandID = "show-unit"
+	CmdSetApplicationBase JujuCommandID = "set-application-base"
 
 	// Operation protection commands
 	CmdDisableCommand   JujuCommandID = "disable-command"
@@ -199,6 +201,9 @@ const (
 	CmdResources      JujuCommandID = "resources"
 	CmdCharmResources JujuCommandID = "charm-resources"
 
+	// Payload commands
+	CmdPayloads JujuCommandID = "payloads"
+
 	// CharmHub related commands
 	CmdInfo     JujuCommandID = "info"
 	CmdFind     JujuCommandID = "find"
@@ -223,8 +228,6 @@ const (
 	// Payload commands
 	CmdWaitFor JujuCommandID = "wait-for"
 )
-
-
 
 // GetAllCommandIDs returns all available command IDs in order
 func GetAllCommandIDs() []JujuCommandID {
@@ -315,6 +318,8 @@ func GetAllCommandIDs() []JujuCommandID {
 		// Manage model
 		CmdModelConfig,
 		CmdModelDefaults,
+		CmdModelConstraints,
+		CmdSetModelConstraints,
 		CmdRetryProvisioning,
 		CmdDestroyModel,
 		CmdGrant,
@@ -346,6 +351,7 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdDiffBundle,
 		CmdShowApplication,
 		CmdShowUnit,
+		CmdSetApplicationBase,
 
 		// Operation protection commands
 		CmdDisableCommand,
@@ -424,6 +430,9 @@ func GetAllCommandIDs() []JujuCommandID {
 		CmdAttachResource,
 		CmdResources,
 		CmdCharmResources,
+
+		// Payload commands
+		CmdPayloads,
 
 		// CharmHub related commands
 		CmdInfo,
