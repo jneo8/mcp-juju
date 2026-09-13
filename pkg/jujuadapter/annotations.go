@@ -41,13 +41,10 @@ var (
 // commandHints maps every command ID to its annotations.
 var commandHints = map[JujuCommandID]toolHints{
 	// Reporting
-	CmdVersion:       hintReadOnly,
 	CmdStatus:        hintReadOnly,
 	CmdShowStatusLog: hintReadOnly,
-	CmdSwitch:        hintReadWrite,
 
 	// Creation
-	CmdBootstrap: hintAdditive,
 	CmdIntegrate: hintAdditive,
 
 	// Cross model relations
@@ -75,22 +72,14 @@ var commandHints = map[JujuCommandID]toolHints{
 	CmdScp:        hintDestructiveOpenWorld,
 	CmdSsh:        hintDestructiveOpenWorld,
 	CmdResolved:   hintAdditiveIdempotent,
-	CmdDebugLog:   hintReadOnly,
 	CmdDebugHooks: hintDestructiveOpenWorld,
 	CmdDebugCode:  hintDestructiveOpenWorld,
 
 	// Configuration
-	CmdConstraints:       hintReadOnly,
-	CmdSetConstraints:    hintAdditiveIdempotent,
-	CmdSyncAgentBinary:   hintAdditiveOpenWorld,
-	CmdUpgradeModel:      hintDestructive,
-	CmdUpgradeController: hintDestructive,
-	CmdRefresh:           hintDestructive,
-	CmdBind:              hintAdditiveIdempotent,
-
-	// Charm tool help
-	CmdHelpHookCommands:   hintReadOnly,
-	CmdHelpActionCommands: hintReadOnly,
+	CmdConstraints:    hintReadOnly,
+	CmdSetConstraints: hintAdditiveIdempotent,
+	CmdRefresh:        hintDestructive,
+	CmdBind:           hintAdditiveIdempotent,
 
 	// Backups
 	CmdCreateBackup:   hintAdditive,
@@ -132,7 +121,6 @@ var commandHints = map[JujuCommandID]toolHints{
 	CmdRevoke:              hintDestructiveIdempotent,
 	CmdShowModel:           hintReadOnly,
 	CmdSetCredential:       hintAdditiveIdempotent,
-	CmdMigrate:             hintDestructive,
 	CmdExportBundle:        hintReadOnly,
 
 	// Actions
@@ -144,9 +132,6 @@ var commandHints = map[JujuCommandID]toolHints{
 	CmdShowOperation: hintReadOnly,
 	CmdShowTask:      hintReadOnly,
 
-	// Controller HA
-	CmdEnableHa: hintAdditiveIdempotent,
-
 	// Applications
 	CmdAddUnit:            hintAdditive,
 	CmdConfig:             hintReadWrite,
@@ -157,6 +142,7 @@ var commandHints = map[JujuCommandID]toolHints{
 	CmdShowApplication:    hintReadOnly,
 	CmdShowUnit:           hintReadOnly,
 	CmdSetApplicationBase: hintAdditiveIdempotent,
+	CmdApplicationStorage: hintReadWrite,
 
 	// Operation protection
 	CmdDisableCommand:   hintDestructiveIdempotent,

@@ -180,9 +180,11 @@ func TestFormatChoices(t *testing.T) {
 
 func TestRun_Success(t *testing.T) {
 	a := newTestAdapter(t)
-	result := callTool(t, a, "version", nil)
-	assert.False(t, result.IsError)
-	assert.Contains(t, resultText(t, result), "3.6")
+	// Public cloud metadata is compiled into the client, so this needs no
+	// controller and does not depend on the host's LXD or kubeconfig.
+	result := callTool(t, a, "regions", map[string]interface{}{"args": []interface{}{"aws"}, "client": true})
+	assert.False(t, result.IsError, resultText(t, result))
+	assert.Contains(t, resultText(t, result), "us-east-1")
 }
 
 func TestRun_StructuredContent(t *testing.T) {

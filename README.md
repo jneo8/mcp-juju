@@ -10,7 +10,9 @@ This MCP server exposes Juju functionality through MCP tools, allowing AI assist
 
 ## Features
 
-This MCP server supports most of the features that the Juju CLI provides (161 commands available).
+This MCP server supports most of the features that the Juju CLI provides (151 commands available).
+
+Not exposed, because their constructors are unexported in the Juju code base: `version`, `bootstrap`, `switch`, `migrate`, `sync-agent-binary`, `upgrade-model`, `upgrade-controller`, `help-hook-commands`, `help-action-commands`, `debug-log`, `enable-ha`. Use the `juju` CLI for those.
 
 ## Quick Start
 
@@ -111,7 +113,6 @@ Examples:
 - `deploy`: Deploy applications
 - `add-unit`: Scale applications
 - `config`: Configure applications
-- `bootstrap`: Initialize a cloud environment
 - `integrate`: Create relations between applications
 - And all other Juju CLI commands
 

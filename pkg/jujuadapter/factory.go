@@ -100,10 +100,6 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return status.NewStatusCommand(), nil
 	case CmdShowStatusLog:
 		return status.NewStatusHistoryCommand(), nil
-	case CmdSwitch:
-		return commands.NewCommandByName(string(id))
-	case CmdVersion:
-		return commands.NewCommandByName(string(id))
 
 	// Application commands
 	case CmdAddUnit:
@@ -128,6 +124,8 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return application.NewShowUnitCommand(), nil
 	case CmdSetApplicationBase:
 		return application.NewSetApplicationBaseCommand(), nil
+	case CmdApplicationStorage:
+		return application.NewStorageCommand(), nil
 	case CmdRefresh:
 		return application.NewRefreshCommand(), nil
 	case CmdBind:
@@ -194,16 +192,6 @@ func (c *commandFactory) createJujuCommand(id JujuCommandID) (cmd.Command, error
 		return model.NewGrantCloudCommand(), nil
 	case CmdRevokeCloud:
 		return model.NewRevokeCloudCommand(), nil
-
-	// Commands from main commands package
-	case CmdBootstrap, CmdMigrate, CmdSyncAgentBinary, CmdUpgradeModel, CmdUpgradeController,
-		CmdDebugLog, CmdEnableHa:
-		return commands.NewCommandByName(string(id))
-	// The fork's NewCommandByName keys these two by their legacy names.
-	case CmdHelpHookCommands:
-		return commands.NewCommandByName("help-hooks")
-	case CmdHelpActionCommands:
-		return commands.NewCommandByName("help-actions")
 
 	// Controller commands
 	case CmdAddModel:
