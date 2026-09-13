@@ -110,13 +110,27 @@ go build .
 
 ### Test
 ```bash
-just test
+just test-unit
 ```
 
 ### Format & Lint
 ```bash
 just lint
 ```
+
+### Functional tests
+
+The functional tests in `tests/functional/` start the real `mcp-juju` binary, drive it through the [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk), and verify the results with [Jubilant](https://documentation.ubuntu.com/jubilant/). One temporary model is created and the charm is deployed once through the MCP `deploy` tool; every test then verifies a tool or resource against it. They need [uv](https://docs.astral.sh/uv/) and a bootstrapped Juju controller; [pytest-jubilant](https://github.com/canonical/pytest-jubilant) creates a temporary model per test module and destroys it afterwards.
+
+```bash
+juju bootstrap localhost lxd          # once; any machine cloud works with the default charm
+just test-functional                       # run everything
+just test-functional -k test_status        # run a subset
+just test-functional --no-juju-teardown    # keep the model for inspection
+just test-functional --juju-controller lxd --test-charm postgresql
+```
+
+Set `MCP_JUJU_BINARY` to test a prebuilt binary instead of building from source.
 
 ## Architecture
 
