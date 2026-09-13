@@ -1,6 +1,11 @@
 package application
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/jneo8/mcp-juju/pkg/jujuadapter"
 	"github.com/mark3labs/mcp-go/server"
@@ -42,8 +47,9 @@ func (a *application) RunServer() error {
 	if a.config.IsStdioServer() {
 		return runStdioServer(a.mcpServer)
 	}
-	streamableHTTPServer := newStreamableHTTPServer(a.mcpServer, a.config)
-	return runStreamableHTTPServer(streamableHTTPServer, a.config)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return runStreamableHTTPServer(ctx, a.mcpServer, a.config)
 }
 
 func (a *application) init() error {

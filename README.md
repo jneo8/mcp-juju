@@ -73,11 +73,25 @@ In HTTP mode the server listens on `http://localhost:8080/mcp` by default.
 ### Configuration
 
 Environment variables (prefixed with `MCP_JUJU_`):
-- `MCP_JUJU_PORT`: Server port for HTTP mode (default: 8080)
-- `MCP_JUJU_DEBUG`: Enable debug logging (default: false)
-- `MCP_JUJU_ENDPOINT`: Endpoint path for HTTP mode (default: /mcp)
 - `MCP_JUJU_SERVER_TYPE`: `stdio` (default) or `http`
 - `MCP_JUJU_TOOL_NAMES`: Comma-separated list of command IDs to expose (default: all)
+- `MCP_JUJU_DEBUG`: Enable debug logging on stderr (default: false)
+- `MCP_JUJU_HOST`: Interface for HTTP mode (default: 127.0.0.1)
+- `MCP_JUJU_PORT`: Port for HTTP mode (default: 8080)
+- `MCP_JUJU_ENDPOINT`: Endpoint path for HTTP mode (default: /mcp)
+- `MCP_JUJU_AUTH_TOKEN`: Bearer token HTTP clients must send
+- `MCP_JUJU_ALLOW_NO_AUTH`: Allow a non-loopback host without a token (default: false)
+- `MCP_JUJU_CORS_ORIGINS`: Comma-separated browser origins allowed by CORS
+- `MCP_JUJU_TLS_CERT`, `MCP_JUJU_TLS_KEY`: Enable HTTPS
+
+### HTTP mode security
+
+The HTTP server binds to `127.0.0.1` by default. Binding another host (`--host 0.0.0.0`) is refused unless `--auth-token` is set, or `--allow-no-auth` is passed explicitly, because every Juju command would otherwise be reachable unauthenticated. With a token, every request must carry `Authorization: Bearer <token>`. Requests over loopback whose `Host` header is not a localhost value are rejected (DNS rebinding protection), and CORS headers are only emitted for origins listed in `--cors-origins`.
+
+```bash
+mcp-juju --server-type http --host 0.0.0.0 --auth-token "$(openssl rand -hex 32)" \
+  --cors-origins https://app.example.com --tls-cert cert.pem --tls-key key.pem
+```
 
 ## Usage
 

@@ -1,8 +1,15 @@
 package application
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/mark3labs/mcp-go/server"
@@ -10,239 +17,137 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewStreamableHTTPServer(t *testing.T) {
-	// Arrange
-	mcpServer := server.NewMCPServer(
-		"test-server",
-		"1.0.0",
-		server.WithResourceCapabilities(true, false),
-		server.WithLogging(),
-	)
+const initializeRequest = `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}`
 
-	cfg := config.Config{
-		Port:     8080,
-		Debug:    false,
-		EndPoint: "/mcp",
-	}
-
-	// Act
-	streamableServer := newStreamableHTTPServer(mcpServer, cfg)
-
-	// Assert
-	assert.NotNil(t, streamableServer)
-	assert.IsType(t, &server.StreamableHTTPServer{}, streamableServer)
+func newTestHandler(t *testing.T, cfg config.Config) http.Handler {
+	t.Helper()
+	mcpServer := server.NewMCPServer("test-server", "1.0.0")
+	return newHTTPHandler(newStreamableHTTPServer(mcpServer, cfg), cfg)
 }
 
-func TestNewStreamableHTTPServer_WithDifferentConfig(t *testing.T) {
-	// Test with different configuration values
-
-	// Arrange
-	mcpServer := server.NewMCPServer(
-		"test-server-2",
-		"2.0.0",
-		server.WithResourceCapabilities(false, true),
-	)
-
-	cfg := config.Config{
-		Port:     9090,
-		Debug:    true,
-		EndPoint: "/custom-endpoint",
+// postInitialize sends an MCP initialize request through the handler.
+func postInitialize(handler http.Handler, headers map[string]string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(initializeRequest))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json, text/event-stream")
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
-
-	// Act
-	streamableServer := newStreamableHTTPServer(mcpServer, cfg)
-
-	// Assert
-	assert.NotNil(t, streamableServer)
-	assert.IsType(t, &server.StreamableHTTPServer{}, streamableServer)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	return rec
 }
 
-func TestNewStreamableHTTPServer_NilMCPServer(t *testing.T) {
-	// Test behavior with nil MCP server
-	// Note: This might panic depending on the underlying implementation
-	// but it's good to document the expected behavior
+func TestHTTPHandler_NoTokenConfigured(t *testing.T) {
+	cfg := config.Config{Host: "127.0.0.1", Port: 8080, EndPoint: "/mcp"}
+	rec := postInitialize(newTestHandler(t, cfg), nil)
 
-	// Arrange
-	cfg := config.Config{
-		Port:     8080,
-		Debug:    false,
-		EndPoint: "/mcp",
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var resp struct {
+		Result struct {
+			ServerInfo struct{ Name string } `json:"serverInfo"`
+		} `json:"result"`
 	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	assert.Equal(t, "test-server", resp.Result.ServerInfo.Name)
+}
 
-	// Act & Assert
-	// This test documents that passing nil will likely cause issues
-	// The actual behavior depends on the mark3labs/mcp-go library implementation
-	assert.NotPanics(t, func() {
-		streamableServer := newStreamableHTTPServer(nil, cfg)
-		// We expect this to return something, but it might not work properly
-		assert.NotNil(t, streamableServer)
+func TestHTTPHandler_BearerToken(t *testing.T) {
+	cfg := config.Config{Host: "127.0.0.1", Port: 8080, EndPoint: "/mcp", AuthToken: "s3cret"}
+	handler := newTestHandler(t, cfg)
+
+	t.Run("missing header", func(t *testing.T) {
+		rec := postInitialize(handler, nil)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		assert.Contains(t, rec.Header().Get("WWW-Authenticate"), "Bearer")
+	})
+
+	t.Run("wrong token", func(t *testing.T) {
+		rec := postInitialize(handler, map[string]string{"Authorization": "Bearer nope"})
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("wrong scheme", func(t *testing.T) {
+		rec := postInitialize(handler, map[string]string{"Authorization": "Basic s3cret"})
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("correct token", func(t *testing.T) {
+		rec := postInitialize(handler, map[string]string{"Authorization": "Bearer s3cret"})
+		assert.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 	})
 }
 
-func TestRunStreamableHTTPServer_FormatCheck(t *testing.T) {
-	// This test verifies the address format but doesn't actually start the server
-	// to avoid binding to ports during testing
-
-	// Arrange
-	mcpServer := server.NewMCPServer(
-		"test-server",
-		"1.0.0",
-		server.WithResourceCapabilities(true, false),
-	)
-
-	testCases := []struct {
-		name           string
-		config         config.Config
-		expectedFormat string
-	}{
-		{
-			name: "default port",
-			config: config.Config{
-				Port:     8080,
-				Debug:    false,
-				EndPoint: "/mcp",
-			},
-			expectedFormat: ":8080",
-		},
-		{
-			name: "custom port",
-			config: config.Config{
-				Port:     9090,
-				Debug:    true,
-				EndPoint: "/custom",
-			},
-			expectedFormat: ":9090",
-		},
-		{
-			name: "high port number",
-			config: config.Config{
-				Port:     65000,
-				Debug:    false,
-				EndPoint: "/test",
-			},
-			expectedFormat: ":65000",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Arrange
-			streamableServer := newStreamableHTTPServer(mcpServer, tc.config)
-			require.NotNil(t, streamableServer)
-
-			// Act - verify the expected address format
-			expectedAddr := fmt.Sprintf(":%d", tc.config.Port)
-
-			// Assert
-			assert.Equal(t, tc.expectedFormat, expectedAddr)
-
-			// We also verify that the URL method works correctly
-			expectedURL := fmt.Sprintf("http://localhost:%d%s", tc.config.Port, tc.config.EndPoint)
-			assert.Equal(t, expectedURL, tc.config.URL())
-		})
-	}
+func TestHTTPHandler_UnknownPath(t *testing.T) {
+	cfg := config.Config{Host: "127.0.0.1", Port: 8080, EndPoint: "/mcp"}
+	req := httptest.NewRequest(http.MethodPost, "/other", strings.NewReader(initializeRequest))
+	rec := httptest.NewRecorder()
+	newTestHandler(t, cfg).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
-func TestConfig_URL(t *testing.T) {
-	// Test the URL generation method from config
+func TestHTTPHandler_CORSPreflight(t *testing.T) {
+	cfg := config.Config{Host: "127.0.0.1", Port: 8080, EndPoint: "/mcp", CORSOrigins: []string{"https://app.example.com"}}
+	handler := newTestHandler(t, cfg)
 
-	testCases := []struct {
-		name        string
-		config      config.Config
-		expectedURL string
-	}{
-		{
-			name: "default configuration",
-			config: config.Config{
-				Port:     8080,
-				EndPoint: "/mcp",
-			},
-			expectedURL: "http://localhost:8080/mcp",
-		},
-		{
-			name: "custom port and endpoint",
-			config: config.Config{
-				Port:     3000,
-				EndPoint: "/api/mcp",
-			},
-			expectedURL: "http://localhost:3000/api/mcp",
-		},
-		{
-			name: "root endpoint",
-			config: config.Config{
-				Port:     8080,
-				EndPoint: "/",
-			},
-			expectedURL: "http://localhost:8080/",
-		},
-		{
-			name: "empty endpoint",
-			config: config.Config{
-				Port:     8080,
-				EndPoint: "",
-			},
-			expectedURL: "http://localhost:8080",
-		},
-	}
+	req := httptest.NewRequest(http.MethodOptions, "/mcp", nil)
+	req.Header.Set("Origin", "https://app.example.com")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	assert.Equal(t, "https://app.example.com", rec.Header().Get("Access-Control-Allow-Origin"))
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Act
-			actualURL := tc.config.URL()
-
-			// Assert
-			assert.Equal(t, tc.expectedURL, actualURL)
-		})
-	}
+	req = httptest.NewRequest(http.MethodOptions, "/mcp", nil)
+	req.Header.Set("Origin", "https://evil.example.com")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	assert.Empty(t, rec.Header().Get("Access-Control-Allow-Origin"))
 }
 
-func TestConfig_StreamableHTTPOptions(t *testing.T) {
-	// Test the StreamableHTTPOptions method
-
-	// Arrange
-	cfg := config.Config{
-		Port:     8080,
-		Debug:    false,
-		EndPoint: "/mcp",
-	}
-
-	// Act
-	options := cfg.StreamableHTTPOptions()
-
-	// Assert
-	assert.NotNil(t, options)
-	assert.Len(t, options, 1, "Should return exactly one option")
-	assert.IsType(t, []server.StreamableHTTPOption{}, options)
+// freePort asks the kernel for an unused loopback port.
+func freePort(t *testing.T) int {
+	t.Helper()
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port
 }
 
-func TestConfig_StreamableHTTPOptions_DifferentEndpoints(t *testing.T) {
-	// Test StreamableHTTPOptions with different endpoint configurations
+func TestRunStreamableHTTPServer_ServesAndShutsDown(t *testing.T) {
+	cfg := config.Config{Host: "127.0.0.1", Port: freePort(t), EndPoint: "/mcp", AuthToken: "tok"}
+	mcpServer := server.NewMCPServer("test-server", "1.0.0")
 
-	testCases := []struct {
-		name     string
-		endpoint string
-	}{
-		{"default endpoint", "/mcp"},
-		{"custom endpoint", "/api/v1/mcp"},
-		{"root endpoint", "/"},
-		{"nested endpoint", "/service/mcp/v1"},
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- runStreamableHTTPServer(ctx, mcpServer, cfg) }()
+
+	// Wait for the listener, then check auth end to end.
+	var resp *http.Response
+	require.Eventually(t, func() bool {
+		req, _ := http.NewRequest(http.MethodPost, cfg.URL(), strings.NewReader(initializeRequest))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept", "application/json, text/event-stream")
+		req.Header.Set("Authorization", "Bearer tok")
+		var err error
+		resp, err = http.DefaultClient.Do(req)
+		return err == nil
+	}, 5*time.Second, 50*time.Millisecond)
+	resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	unauth, err := http.Post(cfg.URL(), "application/json", strings.NewReader(initializeRequest))
+	require.NoError(t, err)
+	unauth.Body.Close()
+	assert.Equal(t, http.StatusUnauthorized, unauth.StatusCode)
+
+	cancel()
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(shutdownTimeout + time.Second):
+		t.Fatal("server did not shut down after context cancellation")
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Arrange
-			cfg := config.Config{
-				Port:     8080,
-				Debug:    false,
-				EndPoint: tc.endpoint,
-			}
-
-			// Act
-			options := cfg.StreamableHTTPOptions()
-
-			// Assert
-			assert.NotNil(t, options)
-			assert.Len(t, options, 1)
-		})
-	}
+	_, err = http.Get(fmt.Sprintf("http://%s/mcp", cfg.ListenAddr()))
+	assert.Error(t, err, "listener should be closed")
 }
