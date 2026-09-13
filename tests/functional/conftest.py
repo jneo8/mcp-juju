@@ -57,6 +57,14 @@ def mcp(mcp_juju_binary: pathlib.Path) -> Generator[McpJujuClient]:
 
 
 @pytest.fixture(scope='module')
+def mcp_readonly(mcp_juju_binary: pathlib.Path) -> Generator[McpJujuClient]:
+    """Module-scoped mcp-juju server started with --read-only, over stdio."""
+    args = ['--server-type', 'stdio', '--read-only']
+    with McpJujuClient.stdio(str(mcp_juju_binary), args=args) as client:
+        yield client
+
+
+@pytest.fixture(scope='module')
 def mcp_http_server(mcp_juju_binary: pathlib.Path) -> Generator[HttpServer]:
     """Module-scoped mcp-juju Streamable HTTP server on loopback with a bearer token."""
     with http_server(str(mcp_juju_binary)) as srv:

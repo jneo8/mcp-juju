@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 func newTestAdapter(t *testing.T) *adapter {
 	t.Helper()
 	t.Setenv("JUJU_DATA", t.TempDir())
-	a, err := NewAdapter(nil)
+	a, err := NewAdapter(nil, false)
 	require.NoError(t, err)
 	return a.(*adapter)
 }
@@ -234,4 +234,131 @@ func TestExecuteCommand_DefaultsToJSON(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "yaml", result.Format)
+}
+
+// --- read-only mode ---------------------------------------------------------
+
+func newReadOnlyAdapter(t *testing.T, toolNames ...string) *adapter {
+	t.Helper()
+	t.Setenv("JUJU_DATA", t.TempDir())
+	a, err := NewAdapter(toolNames, true)
+	require.NoError(t, err)
+	return a.(*adapter)
+}
+
+func TestReadOnlyPoliciesMatchHints(t *testing.T) {
+	for id, hints := range commandHints {
+		_, hasPolicy := readOnlyPolicies[id]
+		if hints.readWrite {
+			assert.True(t, hasPolicy, "%s: hintReadWrite commands need a read-only policy", id)
+		}
+		if hints.readOnly {
+			assert.False(t, hasPolicy, "%s: read-only commands need no policy", id)
+		}
+	}
+	for id := range readOnlyPolicies {
+		_, ok := commandHints[id]
+		assert.True(t, ok, "policy for unknown command %s", id)
+	}
+}
+
+func TestReadOnly_ToolNames(t *testing.T) {
+	a := newReadOnlyAdapter(t)
+	names := map[string]bool{}
+	for _, n := range a.ToolNames() {
+		names[n] = true
+	}
+	assert.True(t, names["status"])
+	assert.True(t, names["config"], "read-write tools with a policy stay available")
+	assert.True(t, names["remove-unit"], "dry-run capable tools stay available")
+	assert.False(t, names["deploy"], "deploy ignores --dry-run for local charms")
+	assert.False(t, names["download"], "its purpose is writing a host file")
+	assert.False(t, names["download-backup"], "its purpose is writing a host file")
+	assert.False(t, names["destroy-model"])
+	for _, n := range a.ToolNames() {
+		assert.True(t, allowedInReadOnly(JujuCommandID(n)), n)
+	}
+
+	explicit := newReadOnlyAdapter(t, "status", "deploy", "config")
+	assert.ElementsMatch(t, []string{"status", "config"}, explicit.ToolNames())
+}
+
+func TestReadOnly_Annotations(t *testing.T) {
+	a := newReadOnlyAdapter(t)
+	tool, _, err := a.GetTool("config")
+	require.NoError(t, err)
+	assert.True(t, *tool.Annotations.ReadOnlyHint)
+	assert.False(t, *tool.Annotations.DestructiveHint)
+	assert.Contains(t, tool.Description, "Read-only mode: only queries")
+
+	remove, _, err := a.GetTool("remove-unit")
+	require.NoError(t, err)
+	assert.True(t, *remove.Annotations.ReadOnlyHint)
+	assert.Contains(t, remove.Description, "only --dry-run")
+
+	status, _, err := a.GetTool("status")
+	require.NoError(t, err)
+	assert.NotContains(t, status.Description, "Read-only mode")
+}
+
+func TestReadOnlyPolicy_Check(t *testing.T) {
+	cfg := readOnlyPolicies[CmdConfig]
+	assert.NoError(t, cfg.check([]string{"app"}, nil))
+	assert.NoError(t, cfg.check([]string{"app", "profile"}, map[string]interface{}{"format": "json", "model": "m", "reset": ""}))
+	assert.ErrorContains(t, cfg.check([]string{"app", "profile=testing"}, nil), "profile=testing")
+	assert.ErrorContains(t, cfg.check([]string{"app"}, map[string]interface{}{"reset": []interface{}{"profile"}}), "--reset")
+	assert.ErrorContains(t, cfg.check([]string{"app"}, map[string]interface{}{"file": "/tmp/x.yaml"}), "--file")
+	assert.ErrorContains(t, cfg.check([]string{"app"}, map[string]interface{}{"some-new-flag": true}), "--some-new-flag",
+		"unknown flags are rejected by default")
+
+	defaults := readOnlyPolicies[CmdModelDefaults]
+	assert.NoError(t, defaults.check(nil, map[string]interface{}{"cloud": "aws", "region": "us-east-1"}))
+
+	region := readOnlyPolicies[CmdDefaultRegion]
+	assert.NoError(t, region.check([]string{"aws"}, nil))
+	assert.ErrorContains(t, region.check([]string{"aws", "us-east-1"}, nil), "at most 1")
+	assert.ErrorContains(t, region.check([]string{"aws"}, map[string]interface{}{"reset": true}), "--reset")
+
+	remove := readOnlyPolicies[CmdRemoveUnit]
+	assert.NoError(t, remove.check([]string{"app/0"}, map[string]interface{}{"dry-run": true, "model": "m"}))
+	assert.ErrorContains(t, remove.check([]string{"app/0"}, nil), "--dry-run=true is required")
+	assert.ErrorContains(t, remove.check([]string{"app/0"}, map[string]interface{}{"dry-run": false}), "--dry-run=true is required")
+	assert.ErrorContains(t, remove.check([]string{"app/0"}, map[string]interface{}{"dry-run": true, "force": true}), "--force")
+	assert.ErrorContains(t, remove.check([]string{"app/0"}, map[string]interface{}{"dry-run": true, "no-prompt": true}), "--no-prompt")
+}
+
+func TestReadOnly_RejectsWritesAsToolErrors(t *testing.T) {
+	a := newReadOnlyAdapter(t)
+
+	write := callTool(t, a, "config", map[string]interface{}{"args": []interface{}{"app", "k=v"}})
+	assert.True(t, write.IsError)
+	assert.Contains(t, resultText(t, write), readOnlyRejection)
+
+	// A command that is not registered in read-only mode is still refused if
+	// called directly.
+	deploy := callTool(t, a, "deploy", map[string]interface{}{"args": []interface{}{"postgresql"}})
+	assert.True(t, deploy.IsError)
+	assert.Contains(t, resultText(t, deploy), readOnlyRejection)
+
+	// Queries pass the guard (this one then fails for lack of a controller,
+	// which is not a read-only rejection).
+	query := callTool(t, a, "config", map[string]interface{}{"args": []interface{}{"app"}})
+	assert.NotContains(t, resultText(t, query), readOnlyRejection)
+
+	read := callTool(t, a, "regions", map[string]interface{}{"args": []interface{}{"aws"}, "client": true})
+	assert.False(t, read.IsError, resultText(t, read))
+
+	// Host writes are rejected even on read-only commands.
+	out := callTool(t, a, "regions", map[string]interface{}{"args": []interface{}{"aws"}, "output": "/tmp/regions.json"})
+	assert.True(t, out.IsError)
+	assert.Contains(t, resultText(t, out), "--output writes to the host")
+	assert.NoFileExists(t, "/tmp/regions.json")
+}
+
+func TestCheckReadOnly_HostWriteFlags(t *testing.T) {
+	assert.NoError(t, checkReadOnly(CmdStatus, nil, map[string]interface{}{"format": "json"}))
+	assert.ErrorContains(t, checkReadOnly(CmdStatus, nil, map[string]interface{}{"output": "x"}), "--output writes to the host")
+	assert.ErrorContains(t, checkReadOnly(CmdExportBundle, nil, map[string]interface{}{"filename": "b.yaml"}), "--filename writes to the host")
+	assert.ErrorContains(t, checkReadOnly(CmdDashboard, nil, map[string]interface{}{"browser": true}), "--browser writes to the host")
+	assert.ErrorContains(t, checkReadOnly(CmdConfig, []string{"app"}, map[string]interface{}{"output": "x"}), "--output")
 }

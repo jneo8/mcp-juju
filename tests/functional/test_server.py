@@ -157,6 +157,72 @@ def test_unknown_application_is_tool_error(juju: jubilant.Juju, mcp: McpJujuClie
     assert 'no-such-app' in result_text(result)
 
 
+# --- Read-only mode ----------------------------------------------------------
+
+
+def test_readonly_tool_list(mcp_readonly: McpJujuClient):
+    assert mcp_readonly.instructions and 'read-only mode' in mcp_readonly.instructions
+    tools = {t.name: t for t in mcp_readonly.list_tools()}
+    assert {'status', 'show-application', 'config', 'model-config'} <= tools.keys()
+    assert not {'deploy', 'add-unit', 'remove-application', 'destroy-model'} & tools.keys()
+    for tool in tools.values():
+        assert tool.annotations is not None and tool.annotations.read_only_hint is True, tool.name
+
+
+def test_readonly_allows_queries(juju: jubilant.Juju, mcp_readonly: McpJujuClient):
+    status = mcp_readonly.call_tool('status', {'model': juju.model})
+    assert not status.is_error, result_text(status)
+    assert set(status.structured_content['applications']) == {APP}  # type: ignore[index]
+
+    config = mcp_readonly.call_tool('config', {'model': juju.model, 'args': [APP]})
+    assert not config.is_error, result_text(config)
+    assert config.structured_content['application'] == APP  # type: ignore[index]
+
+
+def test_readonly_rejects_writes(juju: jubilant.Juju, mcp_readonly: McpJujuClient):
+    before = juju.config(APP)
+
+    write = mcp_readonly.call_tool(
+        'config', {'model': juju.model, 'args': [APP, 'profile=testing']}
+    )
+    assert write.is_error
+    assert 'read-only mode' in result_text(write)
+
+    reset = mcp_readonly.call_tool(
+        'config', {'model': juju.model, 'args': [APP], 'reset': ['profile']}
+    )
+    assert reset.is_error
+    assert 'read-only mode' in result_text(reset)
+
+    assert juju.config(APP) == before, 'rejected writes must not reach Juju'
+
+    # Writing to the host is rejected even for read-only commands.
+    out = mcp_readonly.call_tool(
+        'status', {'model': juju.model, 'output': '/tmp/mcp-juju-readonly-test.json'}
+    )
+    assert out.is_error
+    assert 'writes to the host' in result_text(out)
+    assert not pathlib.Path('/tmp/mcp-juju-readonly-test.json').exists()
+
+
+def test_readonly_dry_run(juju: jubilant.Juju, mcp_readonly: McpJujuClient):
+    units_before = set(juju.status().apps[APP].units)
+    unit = sorted(units_before)[0]
+
+    # A plain remove-unit is refused before Juju is called.
+    refused = mcp_readonly.call_tool('remove-unit', {'model': juju.model, 'args': [unit]})
+    assert refused.is_error
+    assert 'read-only mode' in result_text(refused)
+
+    # With --dry-run the controller only reports what it would remove.
+    dry = mcp_readonly.call_tool(
+        'remove-unit', {'model': juju.model, 'args': [unit], 'dry-run': True}
+    )
+    assert not dry.is_error, result_text(dry)
+    assert unit in result_text(dry)
+    assert set(juju.status().apps[APP].units) == units_before
+
+
 # --- Streamable HTTP transport -----------------------------------------------
 
 
