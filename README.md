@@ -77,6 +77,7 @@ In HTTP mode the server listens on `http://localhost:8080/mcp` by default.
 Environment variables (prefixed with `MCP_JUJU_`):
 - `MCP_JUJU_SERVER_TYPE`: `stdio` (default) or `http`
 - `MCP_JUJU_TOOL_NAMES`: Comma-separated list of command IDs to expose (default: all)
+- `MCP_JUJU_READ_ONLY`: Expose only commands that do not modify state (default: false)
 - `MCP_JUJU_DEBUG`: Enable debug logging on stderr (default: false)
 - `MCP_JUJU_HOST`: Interface for HTTP mode (default: 127.0.0.1)
 - `MCP_JUJU_PORT`: Port for HTTP mode (default: 8080)
@@ -85,6 +86,16 @@ Environment variables (prefixed with `MCP_JUJU_`):
 - `MCP_JUJU_ALLOW_NO_AUTH`: Allow a non-loopback host without a token (default: false)
 - `MCP_JUJU_CORS_ORIGINS`: Comma-separated browser origins allowed by CORS
 - `MCP_JUJU_TLS_CERT`, `MCP_JUJU_TLS_KEY`: Enable HTTPS
+
+### Read-only mode
+
+`--read-only` (or `MCP_JUJU_READ_ONLY=true`) registers only the commands annotated as read-only, plus a few commands that read or write depending on their arguments. Those are kept behind a per-command policy that describes the invocation shapes verified to be read-only in the Juju 3.6 sources; anything else is rejected before Juju is called and reported as an `isError` result:
+
+- `config`, `model-config`, `model-defaults`, `controller-config`, `application-storage`: bare keys or no keys read; `key=value`, `reset` and `file` are rejected.
+- `default-region <cloud>`, `default-credential <cloud>`: a second argument or `reset` is rejected.
+- `remove-application`, `remove-unit`, `remove-machine`: only with `dry-run: true`, which makes the controller report what would be removed without removing it. `deploy --dry-run` is not offered because Juju ignores the flag for local charms.
+
+Read-only covers both Juju state (controller, model, client store) and the host running the server: commands whose purpose is to write host files (`download`, `download-backup`) are not offered, and the file-writing or program-launching flags `output`, `filename`, `filepath` and `browser` are rejected on every command. Policies are deny-by-default: apart from the flags that select the target or shape the output (`model`, `controller`, `format`, `output`, `color`), a flag that is not explicitly allowed is rejected, so a write flag added in a future Juju release cannot slip through. Enforcement happens in the server, so it does not depend on the client honouring annotations. Combine with `--tool-names` to narrow the set further.
 
 ### HTTP mode security
 
@@ -115,6 +126,10 @@ Examples:
 - `config`: Configure applications
 - `integrate`: Create relations between applications
 - And all other Juju CLI commands
+
+## Reference
+
+Precise descriptions of the CLI flags, the MCP interface, every tool and read-only mode are in [docs/reference](docs/reference/README.md).
 
 ## Development
 

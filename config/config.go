@@ -18,6 +18,9 @@ type Config struct {
 	EndPoint   string
 	ServerType string   `mapstructure:"server-type"`
 	ToolNames  []string `mapstructure:"tool-names"`
+	// ReadOnly exposes only commands that do not modify state; commands that
+	// both read and write (config, model-config, ...) reject writes.
+	ReadOnly bool `mapstructure:"read-only"`
 
 	// AuthToken, when set, is the bearer token HTTP clients must present.
 	AuthToken string `mapstructure:"auth-token"`

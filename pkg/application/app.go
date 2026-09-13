@@ -32,7 +32,7 @@ func NewApplication(cfg config.Config, adapter jujuadapter.Adapter) (Application
 			// logging capability are intentionally not advertised: neither
 			// is implemented, and both are deprecated or removed in the
 			// 2026-07-28 MCP specification.
-			server.WithInstructions(serverInstructions),
+			server.WithInstructions(buildInstructions(cfg.ReadOnly)),
 		),
 		config:  cfg,
 		adapter: adapter,

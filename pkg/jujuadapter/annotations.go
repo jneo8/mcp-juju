@@ -12,10 +12,18 @@ type toolHints struct {
 	destructive bool
 	idempotent  bool
 	openWorld   bool
+	// readWrite marks commands that read or write depending on their
+	// arguments; read-only mode keeps them behind a guard (see readonly.go).
+	// It is not an MCP annotation.
+	readWrite bool
 }
 
 // Classification helpers. Names describe the effect the command has on the
-// Juju controller or the local client store.
+// Juju controller, the model, the local client store or the host running the
+// server. Commands whose purpose is to write host files (download-backup,
+// charmhub download) are therefore not read-only; optional file-writing
+// flags on otherwise read-only commands (--output, export-bundle --filename)
+// are rejected by read-only mode instead (see hostWriteFlags).
 var (
 	// hintReadOnly: only reads state; safe to call repeatedly.
 	hintReadOnly = toolHints{readOnly: true, destructive: false, idempotent: true, openWorld: false}
@@ -23,7 +31,7 @@ var (
 	hintReadOnlyOpenWorld = toolHints{readOnly: true, destructive: false, idempotent: true, openWorld: true}
 	// hintReadWrite: reads or updates settings depending on arguments; re-running
 	// with the same arguments has no additional effect.
-	hintReadWrite = toolHints{readOnly: false, destructive: false, idempotent: true, openWorld: false}
+	hintReadWrite = toolHints{readOnly: false, destructive: false, idempotent: true, openWorld: false, readWrite: true}
 	// hintAdditive: creates or extends state without deleting anything.
 	hintAdditive = toolHints{readOnly: false, destructive: false, idempotent: false, openWorld: false}
 	// hintAdditiveIdempotent: additive and safe to repeat with the same arguments.
@@ -83,7 +91,7 @@ var commandHints = map[JujuCommandID]toolHints{
 
 	// Backups
 	CmdCreateBackup:   hintAdditive,
-	CmdDownloadBackup: hintAdditive,
+	CmdDownloadBackup: hintAdditive, // reads the controller but writes a host file
 
 	// SSH keys
 	CmdAddSshKey:    hintAdditiveIdempotent,
@@ -138,7 +146,7 @@ var commandHints = map[JujuCommandID]toolHints{
 	CmdDeploy:             hintAdditive,
 	CmdExpose:             hintAdditiveIdempotent,
 	CmdUnexpose:           hintDestructiveIdempotent,
-	CmdDiffBundle:         hintReadOnly,
+	CmdDiffBundle:         hintReadOnlyOpenWorld, // resolves the bundle from Charmhub
 	CmdShowApplication:    hintReadOnly,
 	CmdShowUnit:           hintReadOnly,
 	CmdSetApplicationBase: hintAdditiveIdempotent,
@@ -226,7 +234,7 @@ var commandHints = map[JujuCommandID]toolHints{
 	// Charmhub
 	CmdInfo:     hintReadOnlyOpenWorld,
 	CmdFind:     hintReadOnlyOpenWorld,
-	CmdDownload: hintAdditiveOpenWorld,
+	CmdDownload: hintAdditiveOpenWorld, // writes the charm to a host file
 
 	// Secrets
 	CmdSecrets:      hintReadOnly,

@@ -17,3 +17,16 @@ Documentation:
 - The template "juju://config/{application}{/config_name*}" returns application configuration as JSON.
 
 Tool annotations mark which commands are read-only and which are destructive. Confirm with the user before running destructive commands against production models.`
+
+// readOnlyInstructions is appended when the server runs with --read-only.
+const readOnlyInstructions = `
+
+This server runs in read-only mode: only commands that do not modify state are available. Tools such as "config" and "model-config" accept queries only; passing key=value arguments, "reset" or "file" is rejected with isError.`
+
+// buildInstructions returns the instructions for the configured mode.
+func buildInstructions(readOnly bool) string {
+	if readOnly {
+		return serverInstructions + readOnlyInstructions
+	}
+	return serverInstructions
+}

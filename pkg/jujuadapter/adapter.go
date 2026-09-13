@@ -34,10 +34,14 @@ type Adapter interface {
 	GetResourceTemplate(name string) (*mcp.ResourceTemplate, mcpserver.ResourceTemplateHandlerFunc, error)
 }
 
-func NewAdapter(toolNames []string) (Adapter, error) {
+// NewAdapter builds the adapter. toolNames restricts the exposed commands
+// (empty means all); readOnly additionally drops every command that
+// modifies state and guards the read-write ones (see readonly.go).
+func NewAdapter(toolNames []string, readOnly bool) (Adapter, error) {
 	a := &adapter{
 		factory:   &commandFactory{},
 		toolNames: toolNames,
+		readOnly:  readOnly,
 	}
 	a.init()
 	return a, nil
@@ -46,21 +50,31 @@ func NewAdapter(toolNames []string) (Adapter, error) {
 type adapter struct {
 	factory   CommandFactory
 	toolNames []string
+	readOnly  bool
 }
 
 func (a *adapter) ToolNames() []string {
-	// If specific tool names are configured, use those
+	var names []string
 	if len(a.toolNames) > 0 {
-		return a.toolNames
+		names = a.toolNames
+	} else {
+		for _, id := range GetAllCommandIDs() {
+			names = append(names, string(id))
+		}
+	}
+	if !a.readOnly {
+		return names
 	}
 
-	// Otherwise, return all available command IDs
-	ids := GetAllCommandIDs()
-	names := make([]string, len(ids))
-	for i, id := range ids {
-		names[i] = string(id)
+	filtered := make([]string, 0, len(names))
+	for _, name := range names {
+		if allowedInReadOnly(JujuCommandID(name)) {
+			filtered = append(filtered, name)
+		} else {
+			log.Warn().Str("tool", name).Msg("Not registering tool: it modifies state and the server is read-only")
+		}
 	}
-	return names
+	return filtered
 }
 
 func (a *adapter) ToolDocResourceNames() []string {
@@ -103,6 +117,12 @@ func (a *adapter) buildEnhancedDescription(cmd Command) string {
 	}
 
 	desc.WriteString(fmt.Sprintf("\n\nFull help: read the resource juju://%s-doc.", cmd.Name()))
+
+	if a.readOnly {
+		if note := readOnlyNote(JujuCommandID(cmd.Name())); note != "" {
+			desc.WriteString("\n\n" + note)
+		}
+	}
 
 	result := desc.String()
 	if result == "" {
@@ -152,9 +172,15 @@ func (a *adapter) GetTool(name string) (*mcp.Tool, mcpserver.ToolHandlerFunc, er
 		return nil, nil, err
 	}
 	title := "juju " + cmd.Name()
+	hints := hintsFor(JujuCommandID(name))
+	if a.readOnly {
+		// Writes are enforced away at execution time, so advertise the tool
+		// as read-only.
+		hints.readOnly, hints.destructive, hints.idempotent = true, false, true
+	}
 	allOptions := []mcp.ToolOption{
 		mcp.WithDescription(a.buildEnhancedDescription(cmd)),
-		mcp.WithToolAnnotation(hintsFor(JujuCommandID(name)).toolAnnotation(title)),
+		mcp.WithToolAnnotation(hints.toolAnnotation(title)),
 	}
 	allOptions = append(allOptions, toolOptions...)
 	tool := mcp.NewTool(cmd.Name(), allOptions...)
@@ -428,6 +454,12 @@ func (r executionResult) Output() string {
 
 func (a *adapter) executeCommand(ctx context.Context, config CommandExecutionConfig) (executionResult, error) {
 	var result executionResult
+
+	if a.readOnly {
+		if err := checkReadOnly(JujuCommandID(config.CommandName), config.Arguments, config.FlagValues); err != nil {
+			return result, err
+		}
+	}
 
 	// Get the command
 	cmd, err := a.factory.GetCommandByName(config.CommandName)

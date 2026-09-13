@@ -20,6 +20,7 @@ func init() {
 	rootCmd.Flags().String("server-type", "stdio", "Server type (http or stdio)")
 	rootCmd.Flags().Bool("debug", false, "Enable debug logging on stderr")
 	rootCmd.Flags().StringSlice("tool-names", []string{}, "List of tool names to register (empty means all tools)")
+	rootCmd.Flags().Bool("read-only", false, "Expose only tools that do not modify state; config-style tools reject writes")
 
 	// HTTP server options.
 	rootCmd.Flags().String("host", "127.0.0.1", "Interface to bind the HTTP server to (non-loopback hosts require --auth-token)")
@@ -41,7 +42,7 @@ var rootCmd = &cobra.Command{
 
 func run(cmd *cobra.Command, args []string) error {
 
-	adapter, err := jujuadapter.NewAdapter(cfg.ToolNames)
+	adapter, err := jujuadapter.NewAdapter(cfg.ToolNames, cfg.ReadOnly)
 	if err != nil {
 		return err
 	}

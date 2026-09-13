@@ -54,6 +54,12 @@ test-coverage:
 mocks:
     go tool mockery
 
+# --- Documentation -------------------------------------------------------
+
+# Regenerate docs/reference/commands.md from the adapter's command tables
+docs-commands:
+    go run ./tools/gendocs
+
 # Run functional tests against a bootstrapped Juju controller (needs uv), e.g. just test-functional -k test_status
 [positional-arguments]
 test-functional *ARGS:
