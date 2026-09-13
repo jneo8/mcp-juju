@@ -62,3 +62,8 @@ go.work
 
 # Claude Code project instructions (local only)
 CLAUDE.md
+
+# Python virtualenv for the functional tests
+.venv/
+__pycache__/
+.pytest_cache/

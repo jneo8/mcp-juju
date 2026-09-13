@@ -2,6 +2,7 @@ package jujuadapter
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -192,7 +193,11 @@ func TestRun_StructuredContent(t *testing.T) {
 	structured, ok := result.StructuredContent.(map[string]interface{})
 	require.True(t, ok, "json output should be returned as structured content")
 	assert.Contains(t, structured, "controllers")
-	assert.Contains(t, resultText(t, result), "controllers")
+
+	var fromText map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(resultText(t, result)), &fromText),
+		"first text block must be exactly the JSON output")
+	assert.Equal(t, structured, fromText)
 }
 
 func TestRun_FailureIsToolError(t *testing.T) {

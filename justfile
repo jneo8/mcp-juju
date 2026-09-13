@@ -41,8 +41,8 @@ build:
 
 # --- Testing -------------------------------------------------------------
 
-# Run all tests
-test:
+# Run Go unit tests
+test-unit:
     go test ./...
 
 # Run tests and open the HTML coverage report
@@ -53,3 +53,8 @@ test-coverage:
 # Regenerate testify mocks (mockery is pinned as a go.mod tool dependency)
 mocks:
     go tool mockery
+
+# Run functional tests against a bootstrapped Juju controller (needs uv), e.g. just test-functional -k test_status
+[positional-arguments]
+test-functional *ARGS:
+    uv run --project tests/functional --group functional pytest tests/functional "$@"

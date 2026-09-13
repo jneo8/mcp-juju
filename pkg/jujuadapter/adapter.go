@@ -573,17 +573,22 @@ func toolErrorResult(name string, err error, result executionResult) *mcp.CallTo
 	return mcp.NewToolResultError(text.String())
 }
 
-// toolSuccessResult returns the command output as text and, when the output
-// is a JSON object, also as structured content.
+// toolSuccessResult returns the command output as text and, when stdout is a
+// JSON object, also as structured content. In that case the first text block
+// is exactly the JSON (as the MCP spec recommends for clients without
+// structured-content support) and any stderr notes follow in a second block.
 func toolSuccessResult(result executionResult) *mcp.CallToolResult {
-	output := result.Output()
 	if result.Format == jsonFormat {
 		var structured map[string]interface{}
 		if err := json.Unmarshal([]byte(result.Stdout), &structured); err == nil && structured != nil {
-			return mcp.NewToolResultStructured(structured, output)
+			res := mcp.NewToolResultStructured(structured, strings.TrimSpace(result.Stdout))
+			if stderr := strings.TrimSpace(result.Stderr); stderr != "" {
+				res.Content = append(res.Content, mcp.NewTextContent(stderr))
+			}
+			return res
 		}
 	}
-	return mcp.NewToolResultText(output)
+	return mcp.NewToolResultText(result.Output())
 }
 
 func (a *adapter) GetResource(name string) (*mcp.Resource, mcpserver.ResourceHandlerFunc, error) {

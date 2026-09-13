@@ -1,0 +1,21 @@
+[project]
+name = "mcp-juju-functional-tests"
+version = "0.0.0"
+description = "Functional tests for the mcp-juju MCP server, driven with Jubilant"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+functional = [
+    "pytest>=9,<10",
+    "pytest-jubilant>=2,<3",
+    "jubilant>=1,<2",
+    "mcp>=1.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+log_cli_level = "INFO"
