@@ -59,7 +59,7 @@ sudo snap start mcp-juju.mcp-juju-daemon
 
 ```bash
 # Run the MCP server over stdio (default)
-make run
+just run
 
 # Run the Streamable HTTP server
 ./mcp-juju --server-type http --port 8080
@@ -110,12 +110,12 @@ go build .
 
 ### Test
 ```bash
-make test
+just test
 ```
 
 ### Format & Lint
 ```bash
-make lint
+just lint
 ```
 
 ## Architecture
