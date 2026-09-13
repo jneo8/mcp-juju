@@ -81,6 +81,34 @@ func TestPersistentPreRun(t *testing.T) {
 		assert.Equal(t, "true", viper.GetString("debug"))
 	})
 
+	t.Run("should map dashed flag names to underscored env vars", func(t *testing.T) {
+		t.Setenv("MCP_JUJU_SERVER_TYPE", "http")
+		t.Setenv("MCP_JUJU_AUTH_TOKEN", "from-env")
+
+		testCmd := &cobra.Command{Use: "test"}
+		testCmd.Flags().String("server-type", "stdio", "")
+		testCmd.Flags().String("host", "127.0.0.1", "")
+		testCmd.Flags().Int("port", 8080, "")
+		testCmd.Flags().String("auth-token", "", "")
+		viper.Reset()
+
+		require.NoError(t, persistentPreRun(testCmd, []string{}))
+		assert.Equal(t, "http", cfg.ServerType)
+		assert.Equal(t, "from-env", cfg.AuthToken)
+	})
+
+	t.Run("should reject non-loopback http host without token", func(t *testing.T) {
+		testCmd := &cobra.Command{Use: "test"}
+		testCmd.Flags().String("server-type", "http", "")
+		testCmd.Flags().String("host", "0.0.0.0", "")
+		testCmd.Flags().Int("port", 8080, "")
+		viper.Reset()
+
+		err := persistentPreRun(testCmd, []string{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "auth-token")
+	})
+
 	t.Run("should return error when server type is invalid", func(t *testing.T) {
 		testCmd := &cobra.Command{
 			Use: "test",

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jneo8/mcp-juju/config"
 	"github.com/jneo8/mcp-juju/pkg/application"
@@ -16,11 +17,19 @@ import (
 var cfg config.Config
 
 func init() {
-	rootCmd.Flags().String("port", "8080", "Port to server on")
-	rootCmd.Flags().String("endpoint", "/mcp", "Endpoint path for the server")
 	rootCmd.Flags().String("server-type", "stdio", "Server type (http or stdio)")
-	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
+	rootCmd.Flags().Bool("debug", false, "Enable debug logging on stderr")
 	rootCmd.Flags().StringSlice("tool-names", []string{}, "List of tool names to register (empty means all tools)")
+
+	// HTTP server options.
+	rootCmd.Flags().String("host", "127.0.0.1", "Interface to bind the HTTP server to (non-loopback hosts require --auth-token)")
+	rootCmd.Flags().String("port", "8080", "Port for the HTTP server")
+	rootCmd.Flags().String("endpoint", "/mcp", "Endpoint path for the HTTP server")
+	rootCmd.Flags().String("auth-token", "", "Bearer token HTTP clients must send (also MCP_JUJU_AUTH_TOKEN)")
+	rootCmd.Flags().Bool("allow-no-auth", false, "Allow serving HTTP on a non-loopback host without --auth-token")
+	rootCmd.Flags().StringSlice("cors-origins", []string{}, "Browser origins allowed by CORS (empty disables CORS headers)")
+	rootCmd.Flags().String("tls-cert", "", "TLS certificate file; enables HTTPS together with --tls-key")
+	rootCmd.Flags().String("tls-key", "", "TLS private key file")
 }
 
 var rootCmd = &cobra.Command{
@@ -49,12 +58,17 @@ func run(cmd *cobra.Command, args []string) error {
 func persistentPreRun(cmd *cobra.Command, args []string) error {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix(config.EnvPrefix)
+	// Map flag names such as server-type to MCP_JUJU_SERVER_TYPE.
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	if err := viper.BindPFlags(cmd.Flags()); err != nil {
 		return fmt.Errorf("unable to bind flags: %w", err)
 	}
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return fmt.Errorf("unable to decode config")
+	// Decode into a fresh struct so stale values never survive a re-run.
+	var decoded config.Config
+	if err := viper.Unmarshal(&decoded); err != nil {
+		return fmt.Errorf("unable to decode config: %w", err)
 	}
+	cfg = decoded
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("config validation failed: %w", err)
 	}
