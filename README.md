@@ -68,6 +68,12 @@ just run
 
 # Expose only a subset of commands, with debug logging on stderr
 ./mcp-juju --tool-names status,deploy,config --debug
+# Browse the server in the MCP Inspector web UI (needs npx); extra flags go to mcp-juju.
+# The recipe first prints example calls as JSON to paste into the Inspector.
+just inspect --read-only
+
+# Call one tool through the Inspector CLI
+just call status '{"model": "mcp-juju-demo"}' --read-only
 ```
 
 In HTTP mode the server listens on `http://localhost:8080/mcp` by default.
@@ -127,9 +133,10 @@ Examples:
 - `integrate`: Create relations between applications
 - And all other Juju CLI commands
 
-## Reference
+## Documentation
 
-Precise descriptions of the CLI flags, the MCP interface, every tool and read-only mode are in [docs/reference](docs/reference/README.md).
+- [Tutorial: Your first Juju deployment through mcp-juju](docs/tutorials/getting-started.md) walks from an empty LXD to browsing the server in the MCP Inspector.
+- [Reference](docs/reference/README.md) gives precise descriptions of the CLI flags, the MCP interface, every tool and read-only mode.
 
 ## Development
 
@@ -161,6 +168,18 @@ just test-functional --juju-controller lxd --test-charm postgresql
 ```
 
 Set `MCP_JUJU_BINARY` to test a prebuilt binary instead of building from source.
+
+### Demo environment
+
+`demo/` holds three scripts that use the same MCP-does, Jubilant-observes pattern as the functional tests, but in a fixed model (`mcp-juju-demo`) that stays around between runs so an MCP client can be pointed at it:
+
+```bash
+just demo-deploy    # add-model and deploy postgresql through the MCP server, wait until active
+just demo-verify    # check stdio, --read-only and HTTP behaviour against the deployment (read-only)
+just demo-clean     # destroy-model through the MCP server
+```
+
+See [demo/README.md](demo/README.md) for options.
 
 ## Architecture
 

@@ -67,3 +67,9 @@ CLAUDE.md
 .venv/
 __pycache__/
 .pytest_cache/
+
+# Binary built by the demo scripts
+demo/.build/
+
+# Output of `just build`
+/mcp-juju
